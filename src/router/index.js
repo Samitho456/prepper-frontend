@@ -22,6 +22,11 @@ const router = createRouter({
       name: 'mealplanner',
       component: () => import('../views/MealPlannerView.vue'),
     },
+    {
+      path: '/Recipes',
+      name: 'recipes',
+      component: () => import('../views/RecipesView.vue'),
+    },
   ],
 })
 

@@ -32,37 +32,40 @@ updateDateArray()
 const mealplans = [
   {
     id: 1,
-    date: '2026-01-08',
+    date: '2026-01-12',
     meal_type: 'Dinner',
     recipe_id: 3,
     user_id: 1,
-    is_comsumed: false,
+    is_consumed: false,
   },
   {
     id: 2,
-    date: '2026-01-09',
+    date: '2026-01-13',
     meal_type: 'Lunch',
     recipe_id: 5,
     user_id: 1,
-    is_comsumed: false,
+    is_consumed: false,
   },
   {
     id: 3,
-    date: '2026-01-10',
+    date: '2026-01-14',
     meal_type: 'Breakfast',
     recipe_id: 2,
     user_id: 1,
-    is_comsumed: false,
+    is_consumed: false,
   },
   {
     id: 4,
-    date: '2026-01-08',
+    date: '2026-01-15',
     meal_type: 'Dinner',
     recipe_id: 4,
     user_id: 1,
-    is_comsumed: false,
+    is_consumed: false,
   },
 ]
+
+let meals = []
+
 function formatDate(Date) {
   const yyyy = Date.getFullYear()
   const mm = String(Date.getMonth() + 1).padStart(2, '0')
@@ -73,7 +76,10 @@ function formatDate(Date) {
 function GetMealPlans() {
   fetch('/api/MealPlan?sortBy=date&ascending=true')
     .then((response) => response.json())
-    .then((json) => console.log(json))
+    .then((json) => {
+      meals = json
+    })
+    .then(() => console.log(meals))
 }
 
 GetMealPlans()

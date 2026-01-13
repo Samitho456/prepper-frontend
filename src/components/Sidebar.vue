@@ -14,20 +14,11 @@ defineOptions({
 
       <ul>
         <li>
+          <RouterLink to="/Recipes">Recipes</RouterLink>
+        </li>
+        <li>
           <RouterLink to="/MealPlanner">MealPlanner</RouterLink>
         </li>
-        <!-- <li>
-          <button>Recepies</button>
-        </li>
-        <li>
-          <button>Ingredients</button>
-        </li>
-        <li>
-          <button>Shopping List</button>
-        </li>
-        <li>
-          <button>Settings</button>
-        </li> -->
       </ul>
     </div>
   </aside>
