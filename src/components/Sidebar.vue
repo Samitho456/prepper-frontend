@@ -11,7 +11,6 @@ defineOptions({
       <RouterLink to="/">
         <img src="/prepper-logo-text.png" alt="Prepper Logo" width="150" />
       </RouterLink>
-
       <ul>
         <li>
           <RouterLink to="/Recipes">Recipes</RouterLink>

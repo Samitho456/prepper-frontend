@@ -24,6 +24,7 @@ defineOptions({
       <span>Protein: {{ recipe.nutritionPrServing.protein }}</span>
     </div>
     <p>{{ recipe.description }}</p>
+    <button>View Recipe</button>
   </div>
 </template>
 
@@ -61,5 +62,13 @@ defineOptions({
 .recipe-card p {
   font-size: 1em;
   color: #444;
+}
+.recipe-card button {
+  background-color: #348b9f;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 4px;
+  cursor: pointer;
 }
 </style>

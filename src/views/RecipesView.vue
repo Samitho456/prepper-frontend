@@ -1,4 +1,5 @@
 <script setup>
+import { RouterLink } from 'vue-router'
 import RecipeCard from '@/components/RecipeCard.vue'
 defineOptions({
   name: 'RecipeOverviewView',
@@ -55,7 +56,9 @@ const sampleRecipe = {
   <h1>Recipe Overview</h1>
   <div class="control-bar">
     <input type="text" name="searchbar" id="searchbar" placeholder="Search Recipes..." />
-    <button class="add-new-recipe-button">Add New Recipe</button>
+    <RouterLink to="/AddRecipe">
+      <button class="add-new-recipe-button">Add New Recipe</button>
+    </RouterLink>
     <select name="filter-recipes" id="filter-recipes">
       <option value="all">All Recipes</option>
       <option value="breakfast">Breakfast</option>
