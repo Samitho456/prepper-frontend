@@ -24,7 +24,9 @@ defineOptions({
       <span>Protein: {{ recipe.nutritionPrServing.protein }}</span>
     </div>
     <p>{{ recipe.description }}</p>
-    <button>View Recipe</button>
+    <RouterLink :to="'/Recipe/' + recipe.id">
+      <button>View Recipe</button>
+    </RouterLink>
   </div>
 </template>
 

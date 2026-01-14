@@ -1,51 +1,75 @@
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useToast } from 'vue-toastification'
+import IngredientInput from '@/components/IngredientInput.vue'
+import InstructionList from '@/components/InstructionList.vue'
+import axios from 'axios'
+
 defineOptions({
   name: 'AddRecipeView',
 })
 
-const ingredients = ref([
-  { ingredient: 'Spaghetti', quantity: 200, unit: 'grams' },
-  { ingredient: 'Tomato Sauce', quantity: 150, unit: 'milliliters' },
-])
+const toast = useToast()
+const router = useRouter()
 
-const instructions = ref([
-  { step: 1, instructionText: 'Cook spaghetti according to package instructions.' },
-  { step: 2, instructionText: 'Heat the tomato sauce in a pan.' },
-])
+const recipe = ref({
+  title: '',
+  description: '',
+  servings: null,
+  prepTime: null,
+  mealType: 'dinner',
+  ingredients: [],
+  instructions: [],
+})
 
-const ingredient = ref('')
-const quantity = ref(null)
-const unit = ref('grams')
-const newInstruction = ref('')
+const isSubmitting = ref(false)
 
 function addRecipe() {
-  // Logic to add the recipe goes here
-  alert('Recipe added!')
-}
-function addIngredient(ing, qty, u) {
-  const newIngredient = { ingredient: String(ing).trim(), quantity: qty, unit: u }
-  ingredients.value.push(newIngredient)
-  ingredient.value = ''
-  quantity.value = null
-  unit.value = 'grams'
-}
+  // Prevent multiple submissions
+  if (isSubmitting.value) return
+  isSubmitting.value = true
 
-function removeIngredient(index) {
-  ingredients.value.splice(index, 1)
-}
-
-function addInstruction(stepText) {
-  const newInstruction = {
-    step: instructions.value.length + 1,
-    instructionText: String(stepText).trim(),
+  // Transform the recipe data to match the API format
+  const apiRecipe = {
+    id: 0,
+    title: String(recipe.value.title).trim(),
+    description: String(recipe.value.description).trim(),
+    servings: recipe.value.servings,
+    preparationTimeMinutes: recipe.value.prepTime,
+    mealType: recipe.value.mealType,
+    ingredients: recipe.value.ingredients.map((ing) => ({
+      id: 0,
+      recipeId: 0,
+      ingredientId: ing.ingredientId || 0,
+      name: ing.ingredient,
+      quantity: ing.quantity,
+      unit: ing.unit,
+    })),
+    instructions: recipe.value.instructions.map((inst, index) => ({
+      id: 0,
+      stepNumber: index + 1,
+      recipeId: 0,
+      instructionText: inst.instructionText,
+    })),
   }
-  instructions.value.push(newInstruction)
-  newInstruction.value = ''
-}
+  console.log('Prepared API recipe data:', apiRecipe)
 
-function removeInstruction(index) {
-  instructions.value.splice(index, 1)
+  // Call the API to add the recipe
+  axios
+    .post('/api/Fullrecipes', apiRecipe)
+    .then((response) => {
+      console.log('Recipe added successfully:', response.data)
+      toast.success('Recipe added successfully!')
+      router.push({ name: 'recipes' })
+    })
+    .catch((error) => {
+      console.error('Error adding recipe:', error)
+      toast.error('Failed to add recipe. Please try again.')
+    })
+    .finally(() => {
+      isSubmitting.value = false
+    })
 }
 </script>
 
@@ -56,7 +80,14 @@ function removeInstruction(index) {
     <!-- Recipe Title Input -->
     <div class="form-row">
       <label for="title">Recipe Title:</label>
-      <input type="text" id="title" name="title" required placeholder="Spaghetti bolognese" />
+      <input
+        type="text"
+        id="title"
+        name="title"
+        required
+        placeholder="Spaghetti bolognese"
+        v-model="recipe.title"
+      />
     </div>
 
     <!-- Description Input -->
@@ -67,25 +98,40 @@ function removeInstruction(index) {
         name="description"
         required
         placeholder="A classic Italian pasta dish with rich meat sauce"
+        v-model="recipe.description"
       ></textarea>
     </div>
 
     <!-- Servings Input -->
     <div class="form-row">
       <label for="servings">Servings:</label>
-      <input type="number" id="servings" name="servings" required placeholder="4" />
+      <input
+        type="number"
+        id="servings"
+        name="servings"
+        required
+        placeholder="4"
+        v-model.number="recipe.servings"
+      />
     </div>
 
     <!-- Preparation Time Input -->
     <div class="form-row">
       <label for="prep-time">Preparation Time (minutes):</label>
-      <input type="number" id="prep-time" name="prep-time" required placeholder="30" />
+      <input
+        type="number"
+        id="prep-time"
+        name="prep-time"
+        required
+        placeholder="30"
+        v-model.number="recipe.prepTime"
+      />
     </div>
 
     <!-- Meal Type Selection -->
     <div class="form-row">
       <label for="meal-type">Meal Type:</label>
-      <select id="meal-type" name="meal-type" required>
+      <select id="meal-type" name="meal-type" required v-model="recipe.mealType">
         <option value="breakfast">Breakfast</option>
         <option value="lunch">Lunch</option>
         <option value="dinner">Dinner</option>
@@ -94,77 +140,20 @@ function removeInstruction(index) {
       </select>
     </div>
 
-    <!-- Ingredient Input Fields -->
+    <!-- Ingredient Input Component -->
     <div class="form-row">
-      <label for="ingredients">Ingredients:</label>
-      <div v-for="item in ingredients" :key="item.ingredient">
-        <div class="ingredient-item">
-          <p class="added-ingredients">
-            {{ item.ingredient }} - {{ item.quantity }} {{ item.unit }}
-          </p>
-          <button
-            class="remove-ingredient-btn"
-            @click="removeIngredient(ingredients.indexOf(item))"
-          >
-            x
-          </button>
-        </div>
-      </div>
-      <div class="ingredient-row">
-        <input v-model="ingredient" type="text" id="ingredient" placeholder="e.g. Spaghetti" />
-        <input v-model.number="quantity" type="number" id="quantity" placeholder="e.g. 200" />
-        <select v-model="unit" name="unit" id="unit">
-          <option value="grams" selected>g</option>
-          <option value="kilograms">kg</option>
-          <option value="milliliters">ml</option>
-          <option value="deciliters">dl</option>
-          <option value="liter">l</option>
-          <option value="tablespoons">tbsp</option>
-          <option value="teaspoons">tsp</option>
-          <option value="pieces">pieces</option>
-        </select>
-        <button
-          type="button"
-          :disabled="!ingredient || ingredient.trim() === '' || !quantity || quantity <= 0"
-          @click="addIngredient(ingredient, quantity, unit)"
-        >
-          Add Ingredient
-        </button>
-      </div>
+      <IngredientInput v-model="recipe.ingredients" />
+    </div>
+
+    <!-- Instruction List Component -->
+    <div class="form-row">
+      <InstructionList v-model="recipe.instructions" />
     </div>
 
     <div class="form-row">
-      <label for="instructions">Instructions:</label>
-      <div v-for="item in instructions" :key="item.step">
-        <div class="ingredient-item">
-          <p class="added-ingredients">Step {{ item.step }}: {{ item.instructionText }}</p>
-          <button
-            class="remove-ingredient-btn"
-            @click="removeInstruction(instructions.indexOf(item))"
-          >
-            x
-          </button>
-        </div>
-      </div>
-      <div>
-        <input
-          v-model="newInstruction"
-          type="text"
-          id="instruction"
-          placeholder="e.g. Cook spaghetti according to package instructions."
-        />
-        <button
-          type="button"
-          :disabled="!newInstruction || newInstruction.trim() === ''"
-          @click="addInstruction(newInstruction)"
-        >
-          Add Instruction
-        </button>
-      </div>
-    </div>
-
-    <div class="form-row">
-      <button type="submit">Add Recipe</button>
+      <button type="submit" :disabled="isSubmitting">
+        {{ isSubmitting ? 'Submitting...' : 'Add Recipe' }}
+      </button>
     </div>
   </form>
 </template>
@@ -210,16 +199,6 @@ h1 {
   font-size: 16px;
 }
 
-.ingredient-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.added-ingredients {
-  color: white;
-  margin: 0;
-}
-
 .form-row button {
   align-self: flex-start;
   padding: 11px 16px;
@@ -231,22 +210,5 @@ h1 {
 }
 .form-row button:hover {
   background-color: #218838;
-}
-
-.remove-ingredient-btn {
-  padding: 4px 8px;
-  background-color: #dc3545 !important;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.remove-ingredient-btn:hover {
-  background-color: #c82333;
-}
-
-.form-row .ingredient-row {
-  display: flex;
-  gap: 8px;
 }
 </style>

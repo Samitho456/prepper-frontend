@@ -43,18 +43,20 @@ defineOptions({
 
 .sidebar li {
   margin: 15px 0;
-  padding-left: 15px;
-  padding-block: 10px;
+  padding: 0;
 }
 
-.sidebar li:hover {
-  background-color: #348b9f;
-}
-
-.sidebar a {
-  margin: 10px;
+.sidebar ul a {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 0 10px 15px;
   color: #fff;
   text-decoration: none;
   font-size: 1.4rem;
+}
+
+.sidebar ul a:hover {
+  background-color: #348b9f;
 }
 </style>
