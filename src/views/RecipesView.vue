@@ -1,55 +1,26 @@
 <script setup>
 import { RouterLink } from 'vue-router'
 import RecipeCard from '@/components/RecipeCard.vue'
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
 defineOptions({
   name: 'RecipeOverviewView',
 })
 
-const sampleRecipe = {
-  id: 1,
-  title: 'Spaghetti Bolognese',
-  description: 'A classic Italian pasta dish with rich meat sauce.',
-  servings: 4,
-  preparationTimeMinutes: 30,
-  mealType: 'Dinner',
-  ingredients: [
-    {
-      name: 'Spaghetti',
-      quantity: '400',
-      unit: 'g',
-    },
-    {
-      name: 'Ground Beef',
-      quantity: '250',
-      unit: 'g',
-    },
-    {
-      name: 'Tomato Sauce',
-      quantity: '1',
-      unit: 'cup',
-    },
-  ],
-  instructions: [
-    {
-      step: 1,
-      instructionText: 'Cook spaghetti according to package instructions.',
-    },
-    {
-      step: 2,
-      instructionText: 'In a separate pan, brown the ground beef.',
-    },
-    {
-      step: 3,
-      instructionText: 'Add tomato sauce to the beef and simmer for 15 minutes.',
-    },
-  ],
-  nutritionPrServing: {
-    calories: 450,
-    protein: '25g',
-    fat: '15g',
-    carbohydrates: '50g',
-  },
-}
+const recipes = ref([])
+
+onMounted(() => {
+  document.title = 'Prepper - Recipes'
+  axios
+    .get('/api/Recipes')
+    .then((response) => {
+      console.log('Fetched recipes:', response.data)
+      recipes.value = response.data
+    })
+    .catch((error) => {
+      console.error('Error fetching recipes:', error)
+    })
+})
 </script>
 
 <template>
@@ -67,7 +38,13 @@ const sampleRecipe = {
       <option value="snack">Snack</option>
     </select>
   </div>
-  <RecipeCard :recipe="sampleRecipe" />
+  <div class="recipes-grid" v-if="recipes.length > 0">
+    <RecipeCard v-for="recipe in recipes" :key="recipe.id" :recipe="recipe" />
+  </div>
+  <div v-else>
+    <p>Loading recipes...</p>
+  </div>
+  <!-- <RecipeCard :recipe="sampleRecipe" /> -->
 </template>
 
 <style scoped>
@@ -100,5 +77,12 @@ input[type='text'] {
   padding: 5px;
   font-size: 16px;
   width: 200px;
+}
+
+.recipes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 20px;
 }
 </style>

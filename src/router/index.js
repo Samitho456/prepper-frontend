@@ -33,9 +33,19 @@ const router = createRouter({
       component: () => import('../views/RecipeView.vue'),
     },
     {
+      path: '/:catchAll(.*)',
+      name: 'notfound',
+      component: () => import('../views/NotFoundView.vue'),
+    },
+    {
       path: '/AddRecipe',
       name: 'addrecipe',
       component: () => import('../views/AddRecipeView.vue'),
+    },
+    {
+      path: '/Ingredients',
+      name: 'ingredients',
+      component: () => import('../views/IngredientsView.vue'),
     },
   ],
 })
