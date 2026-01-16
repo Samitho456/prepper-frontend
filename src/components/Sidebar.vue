@@ -18,6 +18,9 @@ defineOptions({
         <li>
           <RouterLink to="/MealPlanner">MealPlanner</RouterLink>
         </li>
+        <li>
+          <RouterLink to="/Ingredients">Ingredients</RouterLink>
+        </li>
       </ul>
     </div>
   </aside>

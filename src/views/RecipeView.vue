@@ -152,23 +152,25 @@ const sampleRecipe = {
     ingredientId: 0,
     unitAmount: 0,
     baseUnit: null,
-    kcal: 440,
+    kcal: 468.7,
     kj: null,
-    fatTotal: 5.2,
+    fatTotal: 5.3399997,
     fatSaturated: 1.2,
-    carbohydrateTotal: null,
-    carbohydrateSugars: null,
-    fiber: null,
-    protein: 92,
-    salt: null,
+    carbohydrateTotal: 6.7200003,
+    carbohydrateSugars: 3.29,
+    fiber: 1.9599999,
+    protein: 92.63,
+    salt: 48.3,
+    hasIncompleteData: true,
+    inaccurateFields: ['Kj', 'FatSaturated', 'Salt'],
   },
 }
 
 onMounted(async () => {
   try {
     const id = route.params.id
-    // const response = await axios.get(`/api/Fullrecipes/${id}`)
-    state.value.recipe = sampleRecipe
+    const response = await axios.get(`/api/Fullrecipes/${id}`)
+    state.value.recipe = response.data
     console.log('Fetched recipe data:', state.value.recipe)
     state.value.isLoading = false
   } catch (error) {
@@ -208,12 +210,110 @@ onMounted(async () => {
 
       <div class="nutritionalprofile-box">
         <h3>Nutritional Information (per serving)</h3>
+        <div
+          v-if="state.recipe.nutritionalProfilePerServing?.hasIncompleteData"
+          class="nutrition-warning"
+        >
+          ⚠️ Some values may be inaccurate due to missing ingredient nutritional data
+        </div>
         <ul>
-          <li>Calories: {{ state.recipe.nutritionalProfilePerServing.kcal }}</li>
-          <li>Protein: {{ state.recipe.nutritionalProfilePerServing.protein }}g</li>
-          <li>Fat: {{ state.recipe.nutritionalProfilePerServing.fatTotal }}g</li>
-          <li>Carbohydrates: {{ state.recipe.nutritionalProfilePerServing.carbohydrateTotal }}g</li>
+          <li>
+            Calories: {{ Math.round(state.recipe.nutritionalProfilePerServing.kcal) }} kcal
+            <span
+              v-if="state.recipe.nutritionalProfilePerServing.inaccurateFields?.includes('Kcal')"
+              class="inaccurate-badge"
+              >*</span
+            >
+          </li>
+          <li v-if="state.recipe.nutritionalProfilePerServing.kj">
+            Energy: {{ Math.round(state.recipe.nutritionalProfilePerServing.kj) }} kJ
+            <span
+              v-if="state.recipe.nutritionalProfilePerServing.inaccurateFields?.includes('Kj')"
+              class="inaccurate-badge"
+              >*</span
+            >
+          </li>
+          <li>
+            Protein: {{ Math.round(state.recipe.nutritionalProfilePerServing.protein * 10) / 10 }}g
+            <span
+              v-if="state.recipe.nutritionalProfilePerServing.inaccurateFields?.includes('Protein')"
+              class="inaccurate-badge"
+              >*</span
+            >
+          </li>
+          <li>
+            Fat (Total):
+            {{ Math.round(state.recipe.nutritionalProfilePerServing.fatTotal * 10) / 10 }}g
+            <span
+              v-if="
+                state.recipe.nutritionalProfilePerServing.inaccurateFields?.includes('FatTotal')
+              "
+              class="inaccurate-badge"
+              >*</span
+            >
+          </li>
+          <li v-if="state.recipe.nutritionalProfilePerServing.fatSaturated">
+            Fat (Saturated):
+            {{ Math.round(state.recipe.nutritionalProfilePerServing.fatSaturated * 10) / 10 }}g
+            <span
+              v-if="
+                state.recipe.nutritionalProfilePerServing.inaccurateFields?.includes('FatSaturated')
+              "
+              class="inaccurate-badge"
+              >*</span
+            >
+          </li>
+          <li>
+            Carbohydrates (Total):
+            {{ Math.round(state.recipe.nutritionalProfilePerServing.carbohydrateTotal * 10) / 10 }}g
+            <span
+              v-if="
+                state.recipe.nutritionalProfilePerServing.inaccurateFields?.includes(
+                  'CarbohydrateTotal',
+                )
+              "
+              class="inaccurate-badge"
+              >*</span
+            >
+          </li>
+          <li v-if="state.recipe.nutritionalProfilePerServing.carbohydrateSugars">
+            Carbohydrates (Sugars):
+            {{
+              Math.round(state.recipe.nutritionalProfilePerServing.carbohydrateSugars * 10) / 10
+            }}g
+            <span
+              v-if="
+                state.recipe.nutritionalProfilePerServing.inaccurateFields?.includes(
+                  'CarbohydrateSugars',
+                )
+              "
+              class="inaccurate-badge"
+              >*</span
+            >
+          </li>
+          <li v-if="state.recipe.nutritionalProfilePerServing.fiber">
+            Fiber: {{ Math.round(state.recipe.nutritionalProfilePerServing.fiber * 10) / 10 }}g
+            <span
+              v-if="state.recipe.nutritionalProfilePerServing.inaccurateFields?.includes('Fiber')"
+              class="inaccurate-badge"
+              >*</span
+            >
+          </li>
+          <li v-if="state.recipe.nutritionalProfilePerServing.salt">
+            Salt: {{ Math.round(state.recipe.nutritionalProfilePerServing.salt * 10) / 10 }}g
+            <span
+              v-if="state.recipe.nutritionalProfilePerServing.inaccurateFields?.includes('Salt')"
+              class="inaccurate-badge"
+              >*</span
+            >
+          </li>
         </ul>
+        <div
+          v-if="state.recipe.nutritionalProfilePerServing?.inaccurateFields?.length > 0"
+          class="inaccurate-legend"
+        >
+          * = May be inaccurate
+        </div>
       </div>
     </div>
 
@@ -338,6 +438,29 @@ h1 {
 .nutritionalprofile-box ul {
   list-style-type: none;
   padding: 0;
+}
+
+.nutrition-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  font-size: 0.9em;
+  border-left: 4px solid #ffc107;
+}
+
+.inaccurate-badge {
+  color: #ff9800;
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+.inaccurate-legend {
+  margin-top: 10px;
+  font-size: 0.85em;
+  color: #666;
+  font-style: italic;
 }
 
 /* Grid Layout for Ingredients and Instructions */
