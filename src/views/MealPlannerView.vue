@@ -1,4 +1,7 @@
 <script setup>
+import axios from 'axios'
+import { ref, onMounted } from 'vue'
+import MealPlanCalendar from '@/components/MealPlanCalendar.vue'
 const date = new Date()
 
 function getWeek(date) {
@@ -13,9 +16,9 @@ function getWeek(date) {
   return 1 + Math.ceil((firstThursday - target) / 604800000)
 }
 
-const dateArray = new Array(7)
-const weekDayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+const dateArray = ref([])
 
+// Update dateArray to contain the dates for the current week
 function updateDateArray() {
   const currentDay = date.getDay()
   const currentDate = date.getDate()
@@ -25,115 +28,146 @@ function updateDateArray() {
   for (let i = 0; i < 7; i++) {
     const dayOffset = i - ((currentDay + 6) % 7)
     const newDate = new Date(currentYear, currentMonth, currentDate + dayOffset)
-    dateArray[i] = newDate
+    dateArray.value[i] = formatDate(newDate)
   }
 }
-updateDateArray()
-const mealplans = [
-  {
-    id: 1,
-    date: '2026-01-12',
-    meal_type: 'Dinner',
-    recipe_id: 3,
-    user_id: 1,
-    is_consumed: false,
-  },
-  {
-    id: 2,
-    date: '2026-01-13',
-    meal_type: 'Lunch',
-    recipe_id: 5,
-    user_id: 1,
-    is_consumed: false,
-  },
-  {
-    id: 3,
-    date: '2026-01-14',
-    meal_type: 'Breakfast',
-    recipe_id: 2,
-    user_id: 1,
-    is_consumed: false,
-  },
-  {
-    id: 4,
-    date: '2026-01-15',
-    meal_type: 'Dinner',
-    recipe_id: 4,
-    user_id: 1,
-    is_consumed: false,
-  },
+
+const monthNames = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ]
 
+// Format a date object into a structured date representation
+function formatDate(date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const formatedDate = {
+    year: year,
+    month: month,
+    day: day,
+    dateString: `${year}-${month}-${day}`,
+  }
+  return formatedDate
+}
+
+// meal plans data for the week
+const mealplans = ref([])
+
+// temporary meals array
 let meals = []
 
-function formatDate(Date) {
-  const yyyy = Date.getFullYear()
-  const mm = String(Date.getMonth() + 1).padStart(2, '0')
-  const dd = String(Date.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
-}
-
-function GetMealPlans() {
-  fetch('/api/MealPlan?sortBy=date&ascending=true')
-    .then((response) => response.json())
-    .then((json) => {
-      meals = json
+// Generate a grocery list based on the meals planned for the week
+function generateGroceryList() {
+  let groceryList = []
+  meals.forEach((meal) => {
+    meal.ingredients.forEach((ingredient) => {
+      if (ingredient.id in groceryList) {
+        groceryList[ingredient.id].quantity += ingredient.quantity
+      } else {
+        groceryList.push({
+          id: ingredient.id,
+          name: ingredient.name,
+          quantity: ingredient.quantity,
+          unit: ingredient.unit,
+        })
+      }
     })
-    .then(() => console.log(meals))
+  })
+  console.log('Grocery List:', groceryList)
 }
 
-GetMealPlans()
+// Fetch meal plans for the current week
+function GetMealPlans() {
+  try {
+    axios
+      .get(`/api/MealPlans/week?weekStart=${dateArray.value[0]?.dateString || ''}`)
+      .then((response) => {
+        mealplans.value = response.data
+        mealplans.value.forEach((meal) => {
+          meals.push(meal.recipe)
+          console.log('Meal recipe:', meal.recipe)
+        })
+      })
+  } catch (error) {
+    console.error('Error fetching meal plans:', error)
+  }
+}
+
+onMounted(() => {
+  updateDateArray()
+  GetMealPlans()
+})
 </script>
 
 <template>
   <div class="meal-planner-view">
     <h1>Meal Planner</h1>
-    <p>This is where the meal planning functionality will be implemented.</p>
-    <p>Current Week Is {{ getWeek(date) }}</p>
-    <div class="calendar">
-      <div class="calendar-subgrid" v-for="(dayDate, idx) in dateArray" :key="formatDate(dayDate)">
-        <!-- calendar day header -->
-        <div>{{ weekDayNames[idx] }} {{ dayDate.getDate() }}/{{ dayDate.getMonth() + 1 }}</div>
-
-        <!-- meals for the day -->
-        <div v-for="meal in mealplans.filter((m) => m.date === formatDate(dayDate))" :key="meal.id">
-          meal_type: {{ meal.meal_type }} - Recipe {{ meal.recipe_id }}
-        </div>
-
-        <!-- add meal button -->
-        <button class="add-new-recipe-button">Add Meal</button>
+    <!-- Month, year and Week -->
+    <div class="month-year-week-container">
+      <div class="month-year-container">
+        <p>{{ monthNames[new Date().getMonth()] }} {{ new Date().getFullYear() }}</p>
       </div>
+      <div class="week-number-display">Week: {{ getWeek(new Date()) }}</div>
     </div>
-    <div class="meals" v-for="mealplan in mealplans" :key="mealplan.id">
-      <div class="daygrid"></div>
-    </div>
+    <!-- Button to generate grocery list -->
+    <button @click="generateGroceryList">Generate Grocery List</button>
+    <!-- Meal Plan Calendar Component -->
+    <MealPlanCalendar :meals="mealplans" :dates="dateArray" />
   </div>
 </template>
 
 <style scoped>
-.calendar {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-}
-.calendar div {
-  background-color: #f1f1f1;
-  border: 1px solid black;
-  padding: 10px;
-  font-size: 30px;
-  text-align: center;
-}
-.calendar-subgrid {
-  background-color: #d1d1d1;
-  border: 1px solid black;
-  padding: 10px;
-  font-size: 20px;
+h1 {
+  font-size: 36px;
+  margin-bottom: 10px;
+  color: white;
   text-align: center;
 }
 
-.add-new-recipe-button {
-  margin-top: 10px;
-  padding: 5px 10px;
-  font-size: 16px;
-  cursor: pointer;
+.month-year-week-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.month-year-container {
+  color: #e3e3e3;
+  font:
+    400 22px / 28px 'Google Sans',
+    Roboto,
+    Arial,
+    sans-serif;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.week-number-display {
+  font-weight: bold;
+  background-color: #333537;
+  color: #e3e3e3;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.00625rem;
+  line-height: 1rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  margin-left: 8px;
+  padding-inline: 4px;
+  line-height: 20px;
+  border-radius: 4px;
 }
 </style>

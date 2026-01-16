@@ -8,13 +8,50 @@ defineOptions({
   name: 'IngredientsView',
 })
 
+const unitLongFormMap = {
+  g: 'grams',
+  gram: 'grams',
+  grams: 'grams',
+  kg: 'kilograms',
+  kilogram: 'kilograms',
+  kilograms: 'kilograms',
+  ml: 'milliliters',
+  milliliter: 'milliliters',
+  milliliters: 'milliliters',
+  l: 'liters',
+  liter: 'liters',
+  liters: 'liters',
+  dl: 'deciliters',
+  deciliter: 'deciliters',
+  deciliters: 'deciliters',
+  tbsp: 'tablespoons',
+  tablespoon: 'tablespoons',
+  tablespoons: 'tablespoons',
+  tsp: 'teaspoons',
+  teaspoon: 'teaspoons',
+  teaspoons: 'teaspoons',
+  pc: 'piece',
+  pcs: 'piece',
+  piece: 'piece',
+  pieces: 'piece',
+  slice: 'slice',
+  slices: 'slice',
+}
+
+const normalizeUnit = (unit) => {
+  if (!unit) return unit
+  const normalized = unitLongFormMap[unit.trim().toLowerCase()]
+  return normalized || unit
+}
+
 const defaultUnits = [
   'grams',
   'kilograms',
   'milliliters',
   'liters',
-  'tbsp',
-  'tsp',
+  'deciliters',
+  'tablespoons',
+  'teaspoons',
   'piece',
   'slice',
 ]
@@ -46,7 +83,7 @@ const extractUniqueUnits = (ingredients) => {
   ingredients.forEach((ingredient) => {
     ingredient.nutritionalProfiles.forEach((profile) => {
       if (profile.baseUnit) {
-        units.add(profile.baseUnit)
+        units.add(normalizeUnit(profile.baseUnit))
       }
     })
   })
@@ -68,10 +105,18 @@ onMounted(() => {
     .get('api/Ingredients/GetNutritionalProfiles')
     .then((response) => {
       console.log('Fetched ingredients:', response.data)
-      state.value.ingredients = response.data
+      const normalizedIngredients = response.data.map((ingredient) => ({
+        ...ingredient,
+        nutritionalProfiles: ingredient.nutritionalProfiles.map((profile) => ({
+          ...profile,
+          baseUnit: normalizeUnit(profile.baseUnit),
+        })),
+      }))
+
+      state.value.ingredients = normalizedIngredients
 
       // Extract unique units from the database
-      const uniqueUnits = extractUniqueUnits(response.data)
+      const uniqueUnits = extractUniqueUnits(normalizedIngredients)
       state.value.availableUnits = uniqueUnits
       state.value.filteredUnitsEdit = [...uniqueUnits]
       state.value.filteredUnitsAdd = [...uniqueUnits]
@@ -94,7 +139,7 @@ const isExpanded = (ingredientId) => {
 
 const startEdit = (profile) => {
   state.value.editingProfile = profile.id
-  state.value.editingData = { ...profile }
+  state.value.editingData = { ...profile, baseUnit: normalizeUnit(profile.baseUnit) }
 }
 
 const cancelEdit = () => {
@@ -107,10 +152,12 @@ const saveProfile = async () => {
   state.value.savingProfile = profileId
 
   try {
-    const response = await axios.put(
-      `/api/NutritionalProfiles/${profileId}`,
-      state.value.editingData,
-    )
+    const normalizedData = {
+      ...state.value.editingData,
+      baseUnit: normalizeUnit(state.value.editingData.baseUnit),
+    }
+
+    const response = await axios.put(`/api/NutritionalProfiles/${profileId}`, normalizedData)
     console.log('Profile updated:', response.data)
 
     // Update the local state with the response
@@ -122,8 +169,12 @@ const saveProfile = async () => {
         (p) => p.id === profileId,
       )
       if (profileIndex !== -1) {
-        state.value.ingredients[ingredientIndex].nutritionalProfiles[profileIndex] =
-          state.value.editingData
+        const updatedProfile = {
+          ...response.data,
+          baseUnit: normalizeUnit(response.data.baseUnit),
+        }
+
+        state.value.ingredients[ingredientIndex].nutritionalProfiles[profileIndex] = updatedProfile
       }
     }
 
@@ -142,7 +193,7 @@ const startAddProfile = (ingredientId) => {
   state.value.newProfileData = {
     ingredientId: ingredientId,
     unitAmount: 100,
-    baseUnit: 'g',
+    baseUnit: 'grams',
     kcal: null,
     kj: null,
     fatTotal: null,
@@ -164,13 +215,23 @@ const saveNewProfile = async () => {
   const ingredientId = state.value.addingProfile
 
   try {
-    const response = await axios.post(`/api/NutritionalProfiles`, state.value.newProfileData)
+    const normalizedData = {
+      ...state.value.newProfileData,
+      baseUnit: normalizeUnit(state.value.newProfileData.baseUnit),
+    }
+
+    const response = await axios.post(`/api/NutritionalProfiles`, normalizedData)
     console.log('Profile created:', response.data)
 
     // Add the new profile to the ingredient
     const ingredientIndex = state.value.ingredients.findIndex((ing) => ing.id === ingredientId)
     if (ingredientIndex !== -1) {
-      state.value.ingredients[ingredientIndex].nutritionalProfiles.push(response.data)
+      const savedProfile = {
+        ...response.data,
+        baseUnit: normalizeUnit(response.data.baseUnit),
+      }
+
+      state.value.ingredients[ingredientIndex].nutritionalProfiles.push(savedProfile)
       // Expand the ingredient to show the new profile
       state.value.expandedItems[ingredientId] = true
     }
@@ -184,7 +245,7 @@ const saveNewProfile = async () => {
 }
 
 const addNewUnit = (unitName) => {
-  const trimmedUnit = unitName.trim()
+  const trimmedUnit = normalizeUnit(unitName.trim())
   if (trimmedUnit && !state.value.availableUnits.includes(trimmedUnit)) {
     state.value.availableUnits.push(trimmedUnit)
     return trimmedUnit
@@ -221,44 +282,48 @@ const filterUnitsAdd = () => {
 }
 
 const selectUnitEdit = (unit) => {
-  state.value.editingData.baseUnit = unit
-  state.value.unitSearchEdit = unit
+  const normalizedUnit = normalizeUnit(unit)
+  state.value.editingData.baseUnit = normalizedUnit
+  state.value.unitSearchEdit = normalizedUnit
   state.value.showUnitDropdownEdit = false
 }
 
 const selectUnitAdd = (unit) => {
-  state.value.newProfileData.baseUnit = unit
-  state.value.unitSearchAdd = unit
+  const normalizedUnit = normalizeUnit(unit)
+  state.value.newProfileData.baseUnit = normalizedUnit
+  state.value.unitSearchAdd = normalizedUnit
   state.value.showUnitDropdownAdd = false
 }
 
 const addNewUnitFromSearchEdit = () => {
   const search = state.value.unitSearchEdit.trim()
-  if (search && !state.value.availableUnits.includes(search)) {
-    const newUnit = addNewUnit(search)
+  const normalizedSearch = normalizeUnit(search)
+  if (normalizedSearch && !state.value.availableUnits.includes(normalizedSearch)) {
+    const newUnit = addNewUnit(normalizedSearch)
     if (newUnit) {
       state.value.editingData.baseUnit = newUnit
       state.value.unitSearchEdit = newUnit
       state.value.showUnitDropdownEdit = false
       state.value.filteredUnitsEdit = [...state.value.availableUnits]
     }
-  } else if (search && state.value.availableUnits.includes(search)) {
-    selectUnitEdit(search)
+  } else if (normalizedSearch && state.value.availableUnits.includes(normalizedSearch)) {
+    selectUnitEdit(normalizedSearch)
   }
 }
 
 const addNewUnitFromSearchAdd = () => {
   const search = state.value.unitSearchAdd.trim()
-  if (search && !state.value.availableUnits.includes(search)) {
-    const newUnit = addNewUnit(search)
+  const normalizedSearch = normalizeUnit(search)
+  if (normalizedSearch && !state.value.availableUnits.includes(normalizedSearch)) {
+    const newUnit = addNewUnit(normalizedSearch)
     if (newUnit) {
       state.value.newProfileData.baseUnit = newUnit
       state.value.unitSearchAdd = newUnit
       state.value.showUnitDropdownAdd = false
       state.value.filteredUnitsAdd = [...state.value.availableUnits]
     }
-  } else if (search && state.value.availableUnits.includes(search)) {
-    selectUnitAdd(search)
+  } else if (normalizedSearch && state.value.availableUnits.includes(normalizedSearch)) {
+    selectUnitAdd(normalizedSearch)
   }
 }
 </script>
