@@ -1,8 +1,44 @@
+:root {
+  --primary-color: #3a8f9f;
+  --secondary-color: #7fcd91;
+  --tritiary-color: #f4a261;
+  --font-color: #2d3748;
+  --secondary-font-color: #718096;
+  --backgroud-color: #f7fafc;
+  --content-card-bg: #ffffff;
+  --button-border-radius: 8px;
+  --container-border-radius: 16px;
+  --border-color: #e2e8f0;
+  --heading-font: 'Nunito', sans-serif;
+  --body-font: 'Open Sans', sans-serif;
+  --primary-color-hover: #327a85;
+}
+
 html {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: nunito, sans-serif;
 }
 
 body {
-  background-color: #131314;
+  background-color: #f7fafc;
   margin: 0;
+}
+
+.action-button {
+  background-color: var(--primary-color);
+  color: #ffffff;
+  border: none;
+  padding: 12px 16px;
+  border-radius: var(--button-border-radius);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95em;
+  transition: all 0.2s ease;
+}
+
+.action-button:hover {
+  background-color: var(--primary-color-hover);
+}
+
+.action-button:active {
+  transform: scale(0.98);
 }

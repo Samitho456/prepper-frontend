@@ -1,0 +1,31 @@
+Core Brand Colors:
+    Prepper Teal: #3A8F9F  | The main action color. Primary buttons (e.g., "Save Recipe"), active navigation icons, main headers.
+    Fresh Mint: #7FCD91    | Success states (e.g., "Item Added!"), secondary buttons, highlighting healthy choices or fresh ingredients.
+    Timer Orange: #F4A261  | Attention grabbers. "Expiring Soon" labels, timers, call-to-action buttons that need to stand out against teal.
+
+Utility Neutrals:
+    Charcoal Text: #2D3748 | Primary text, recipe titles, instructions.
+    Slate Gray: #718096    | Secondary text, subtitles, meta-data (e.g., "Prep time: 20m"), inactive icons.
+    Off-White BG: #F7FAFC  | The main application background color. Slightly warmer than pure white, easier on the eyes.
+    Pure White: #FFFFFF    | Content cards (recipes, pantry items) placed on top of the Off-White BG to create depth.
+    Border Gray: #E2E8F0   | Subtle borders for form inputs and dividers between list items.
+
+Design Language & Typography:
+    1. Typography
+        Headings (H1-H3): Nunito
+        Body Text & UI: Open Sans
+
+    2. UI Element Styling
+        Radii (Rounded Corners): Everything should be soft
+            -Buttons: Full rounded caps or generous 8px-12px border radius.
+            -Cards/Containers: 12px-16px border radius.
+        
+        Depth & Shadow: Use soft, diffused shadows to lift content cards off the background.
+            - Example CSS box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)
+    
+    3. Iconography
+        Use a library Feather Icons.
+        Icons should be stroked with the Prepper Teal or Slate Gray, matching the line weight of the logo.
+
+    
+

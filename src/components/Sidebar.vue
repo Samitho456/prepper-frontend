@@ -9,7 +9,10 @@ defineOptions({
   <aside class="sidebar">
     <div>
       <RouterLink to="/">
-        <img src="/prepper-logo-text.png" alt="Prepper Logo" width="150" />
+        <div class="logo-container">
+          <img src="/Logo-antibg(New).svg" alt="Prepper Logo" width="50" />
+          <span class="logo-text">prepper</span>
+        </div>
       </RouterLink>
       <ul>
         <li>
@@ -30,7 +33,24 @@ defineOptions({
 .sidebar {
   width: 200px;
   height: 100vh;
-  background-color: #1e1f20;
+  background-color: var(--primary-color);
+  color: #fff;
+}
+
+.sidebar a {
+  text-decoration: none;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-text {
+  margin-top: 10px;
+  font-size: 1.8rem;
+  font-weight: bold;
   color: #fff;
 }
 
