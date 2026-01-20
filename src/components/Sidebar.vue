@@ -16,13 +16,13 @@ defineOptions({
       </RouterLink>
       <ul>
         <li>
-          <RouterLink to="/Recipes">Recipes</RouterLink>
+          <RouterLink to="/Recipes" active-class="active">Recipes</RouterLink>
         </li>
         <li>
-          <RouterLink to="/MealPlanner">MealPlanner</RouterLink>
+          <RouterLink to="/MealPlanner" active-class="active">MealPlanner</RouterLink>
         </li>
         <li>
-          <RouterLink to="/Ingredients">Ingredients</RouterLink>
+          <RouterLink to="/Ingredients" active-class="active">Ingredients</RouterLink>
         </li>
       </ul>
     </div>
@@ -39,6 +39,11 @@ defineOptions({
 
 .sidebar a {
   text-decoration: none;
+}
+
+.sidebar a.active {
+  background-color: #216e7f;
+  border-left: 4px solid var(--triary-color);
 }
 
 .logo-container {

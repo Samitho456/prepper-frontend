@@ -112,39 +112,32 @@ onMounted(() => {
 
 <template>
   <div class="meal-planner-view">
-    <h1>Meal Planner</h1>
     <!-- Month, year and Week -->
     <div class="month-year-week-container">
       <div class="month-year-container">
         <p>{{ monthNames[new Date().getMonth()] }} {{ new Date().getFullYear() }}</p>
       </div>
       <div class="week-number-display">Week: {{ getWeek(new Date()) }}</div>
+      <!-- Button to generate grocery list -->
+      <button @click="generateGroceryList" class="action-button grocery-button">
+        Generate Grocery List
+      </button>
     </div>
-    <!-- Button to generate grocery list -->
-    <button @click="generateGroceryList">Generate Grocery List</button>
     <!-- Meal Plan Calendar Component -->
     <MealPlanCalendar :meals="mealplans" :dates="dateArray" />
   </div>
 </template>
 
 <style scoped>
-h1 {
-  font-size: 36px;
-  margin-bottom: 10px;
-  color: white;
-  text-align: center;
-}
-
 .month-year-week-container {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
   font-size: 20px;
   font-weight: bold;
 }
 
 .month-year-container {
-  color: #e3e3e3;
+  color: var(--font-color);
   font:
     400 22px / 28px 'Google Sans',
     Roboto,
@@ -152,12 +145,13 @@ h1 {
     sans-serif;
   letter-spacing: 0;
   white-space: nowrap;
+  margin-left: 5px;
 }
 
 .week-number-display {
   font-weight: bold;
-  background-color: #333537;
-  color: #e3e3e3;
+  background-color: var(--secondary-color);
+  color: var(--font-color);
   font-size: 0.85rem;
   font-weight: 500;
   letter-spacing: 0.00625rem;
@@ -169,5 +163,9 @@ h1 {
   padding-inline: 4px;
   line-height: 20px;
   border-radius: 4px;
+}
+
+.grocery-button {
+  margin-left: auto;
 }
 </style>

@@ -1,11 +1,12 @@
 :root {
   --primary-color: #3a8f9f;
   --secondary-color: #7fcd91;
-  --tritiary-color: #f4a261;
+  --triary-color: #f4a261;
   --font-color: #2d3748;
   --secondary-font-color: #718096;
   --backgroud-color: #f7fafc;
   --content-card-bg: #ffffff;
+  --content-card-content-bg: #bbc2c9;
   --button-border-radius: 8px;
   --container-border-radius: 16px;
   --border-color: #e2e8f0;
@@ -21,6 +22,15 @@ html {
 body {
   background-color: #f7fafc;
   margin: 0;
+}
+
+.title-text {
+  color: var(--font-color);
+  font-family: var(--heading-font);
+  font-size: 2.5em;
+  font-weight: 700;
+  margin-bottom: 0px;
+  text-align: center;
 }
 
 .action-button {
