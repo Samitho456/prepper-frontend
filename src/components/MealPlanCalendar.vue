@@ -1,10 +1,12 @@
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import AddMealCard from './AddMealCard.vue'
+import axios from 'axios'
 defineOptions({
   name: 'MealPlanCalendar',
 })
 
 const weekDayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+const mealCategories = ['Breakfast', 'Lunch', 'Dinner', 'Other']
 
 const props = defineProps({
   meals: {
@@ -15,72 +17,27 @@ const props = defineProps({
     type: Array,
     required: true,
   },
-})
-
-let recipes = [
-  { id: 1, title: 'Spaghetti Bolognese', nutritionalProfilePerServing: { kcal: 400 } },
-  { id: 2, title: 'Chicken Salad', nutritionalProfilePerServing: { kcal: 250 } },
-  { id: 3, title: 'Vegetable Stir Fry', nutritionalProfilePerServing: { kcal: 300 } },
-  { id: 4, title: 'Beef Tacos', nutritionalProfilePerServing: { kcal: 500 } },
-  { id: 5, title: 'Grilled Salmon', nutritionalProfilePerServing: { kcal: 450 } },
-]
-
-let ingredients = [
-  { id: 1, name: 'Tomato', quantity: '2 pcs' },
-  { id: 2, name: 'Lettuce', quantity: '100 g' },
-  { id: 3, name: 'Chicken Breast', quantity: '200 g' },
-  { id: 4, name: 'Beef Mince', quantity: '250 g' },
-  { id: 5, name: 'Salmon Fillet', quantity: '150 g' },
-]
-
-const mealTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snack']
-
-const editMode = ref(null) // Store the dateString of the date in edit mode
-const formData = ref({ food: '', quantity: '', unit: '', mealType: '' })
-
-watch(
-  () => formData.value.food,
-  (foodKey) => {
-    if (!foodKey) {
-      return
-    }
-
-    const [kind, idStr] = foodKey.split('-')
-    const id = Number(idStr)
-    const isRecipe = kind === 'recipe'
-
-    if (isRecipe) {
-      const selected = recipes.find((item) => item.id === id)
-      if (!selected) return
-      if (!formData.value.quantity) formData.value.quantity = 1
-      if (!formData.value.unit) formData.value.unit = 'portion'
-    } else {
-      const selected = ingredients.find((item) => item.id === id)
-      if (!selected) return
-      if (formData.value.quantity === 1) formData.value.quantity = ''
-      if (formData.value.unit === 'portion') formData.value.unit = ''
-    }
+  recipes: {
+    type: Array,
+    required: true,
   },
-)
-
-onMounted(() => {
-  // Initialization logic if needed
-  recipes.forEach((r) => (r.isRecipe = true))
-  ingredients.forEach((i) => (i.isRecipe = false))
 })
 
-function addMeal(date) {
-  const { food, quantity, unit, mealType } = formData.value
-  // Placeholder for adding meal functionality
-  console.log('Added', food, quantity, unit, mealType, 'for date:', date)
-  // Reset form
-  formData.value = { food: '', quantity: '', unit: '', mealType: '' }
-  editMode.value = null
-}
+const emit = defineEmits(['meal-added', 'meal-removed'])
 
 function consumeMeal(mealId) {
   // Placeholder for marking meal as consumed functionality
   console.log('Mark meal as consumed:', mealId)
+}
+
+async function removeMeal(mealId) {
+  try {
+    await axios.delete(`/api/mealplans/${mealId}`)
+    emit('meal-removed', mealId)
+    console.log('Removed meal with ID:', mealId)
+  } catch (error) {
+    console.error('Error removing meal:', error)
+  }
 }
 </script>
 
@@ -97,68 +54,42 @@ function consumeMeal(mealId) {
           </div>
         </div>
       </div>
-      <!-- Meals for the day -->
-      <div
-        v-for="meal in props.meals.filter((m) => m.date === dateItem.dateString)"
-        :key="meal.id"
-        class="meal-container"
-      >
-        <div class="meal-field">
-          {{ meal.mealType }}: {{ meal.recipe.title }}
-          <p v-if="meal.recipe.nutritionalProfilePerServing.kcal">
-            {{ meal.recipe.nutritionalProfilePerServing.kcal }} kcal
-          </p>
-          <p v-else>unknown kcal</p>
-          <button @click="consumeMeal(meal.id)">Is consumed</button>
+
+      <div v-for="category in mealCategories" :key="category" class="category-box">
+        <div class="meal-category">
+          {{ category }}
+        </div>
+        <!-- Meals for the day -->
+        <div
+          v-for="meal in props.meals.filter(
+            (m) =>
+              m.date === dateItem.dateString && m.mealType.toLowerCase() === category.toLowerCase(),
+          )"
+          :key="meal.id"
+          class="meal-container"
+        >
+          <div class="meal-field">
+            <span>{{ meal.recipe.title }}</span>
+            <p v-if="meal.recipe.nutritionalProfilePerServing?.kcal">
+              {{ meal.recipe.nutritionalProfilePerServing.kcal }} kcal
+            </p>
+            <p v-else>unknown kcal</p>
+            <button @click="consumeMeal(meal.id)" class="action-button">Mark as consumed</button>
+            <button @click="removeMeal(meal.id)" class="cancel-button">Remove</button>
+          </div>
         </div>
       </div>
       <!-- Add Meal Button -->
-      <div class="action-button-container">
-        <button
-          v-if="editMode !== dateItem.dateString"
-          @click="editMode = dateItem.dateString"
-          class="action-button"
-        >
-          Add Meal
-        </button>
-        <div v-else>
-          <select v-model="formData.food" name="food" id="food">
-            <option value="">Select food</option>
-            <option
-              v-for="food in recipes.concat(ingredients)"
-              :key="food.id"
-              :value="food.isRecipe ? `recipe-${food.id}` : `ingredient-${food.id}`"
-            >
-              {{ food.title || food.name }}
-            </option>
-          </select>
-          <input
-            v-model="formData.quantity"
-            type="number"
-            name="quantity"
-            id="quantity"
-            placeholder="Quantity"
-          />
-          <input v-model="formData.unit" type="text" name="unit" id="unit" placeholder="Unit" />
-          <select v-model="formData.mealType" name="mealType" id="mealType">
-            <option value="">Select meal type</option>
-            <option v-for="type in mealTypes" :key="type" :value="type">
-              {{ type }}
-            </option>
-          </select>
-          <button @click="addMeal(dateItem.dateString)" class="action-button">+</button>
-          <button @click="editMode = null" class="action-button">Cancel</button>
-        </div>
-      </div>
+      <AddMealCard
+        :recipes="props.recipes"
+        :Date="dateItem.dateString"
+        @meal-added="emit('meal-added', $event)"
+      />
     </div>
   </div>
 </template>
 
 <style scoped>
-h2 {
-  color: #333;
-}
-
 .calendar {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -204,12 +135,25 @@ h2 {
   color: var(--font-color);
 }
 
+.meal-category {
+  background-color: var(--secondary-color);
+  color: var(--font-color);
+  font-size: 18px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  font-weight: bold;
+  margin-top: 10px;
+  margin: 10px 5px 5px 5px;
+  padding: 5px;
+  text-align: center;
+}
+
 .meal-container {
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   margin: 5px;
   padding: 10px;
-  border-radius: 5px;
-  background-color: #f9f9f9;
+  border-radius: var(--container-border-radius);
+  background-color: var(--content-card-bg);
 }
 
 .action-button-container {

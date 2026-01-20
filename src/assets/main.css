@@ -1,7 +1,7 @@
 :root {
   --primary-color: #3a8f9f;
   --secondary-color: #7fcd91;
-  --triary-color: #f4a261;
+  --tertiary-color: #f4a261;
   --font-color: #2d3748;
   --secondary-font-color: #718096;
   --backgroud-color: #f7fafc;
@@ -51,4 +51,30 @@ body {
 
 .action-button:active {
   transform: scale(0.98);
+}
+
+.cancel-button {
+  background-color: #e53e3e;
+  color: #ffffff;
+  border: none;
+  padding: 12px 16px;
+  border-radius: var(--button-border-radius);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95em;
+  transition: all 0.2s ease;
+}
+
+.cancel-button:hover {
+  background-color: #c53030;
+}
+.cancel-button:active {
+  transform: scale(0.98);
+}
+
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
 }

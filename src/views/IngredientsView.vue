@@ -384,7 +384,7 @@ const addNewUnitFromSearchAdd = () => {
   </section>
 
   <div v-else class="loading-spinner">
-    <RingLoader />
+    <RingLoader color="#3a8f9f" size="100px" />
   </div>
 </template>
 
@@ -427,13 +427,6 @@ const addNewUnitFromSearchAdd = () => {
   text-align: center;
   padding: 4rem 2rem;
   color: #6b7280;
-}
-
-.loading-spinner {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200px;
 }
 
 /* Responsive Design */
