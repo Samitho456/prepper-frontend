@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import InventoryLocationSection from '@/components/InventoryLocationSection.vue'
+import axios from 'axios'
 
 const inventoryItems = ref([])
 const locations = ref([])
@@ -11,38 +12,55 @@ const addForm = ref(false)
 
 function fetchInventory() {
   // Placeholder for future data fetching logic
-  inventoryItems.value = [
-    {
-      id: 1,
-      quantity: 5,
-      unit: 'kg',
-      expiration_date: '2026-12-31',
-      user_id: 1,
-      ingredient_id: 1,
-      recipe_id: null,
-      location_id: 1,
-      created_at: '2024-01-01',
-    },
-    {
-      id: 2,
-      quantity: 2,
-      unit: 'portions',
-      expiration_date: '2025-06-30',
-      user_id: 1,
-      ingredient_id: null,
-      recipe_id: 1,
-      location_id: 2,
-      created_at: '2024-02-15',
-    },
-  ]
+  // inventoryItems.value = [
+  //   {
+  //     id: 1,
+  //     quantity: 5,
+  //     unit: 'kg',
+  //     expiration_date: '2026-12-31',
+  //     user_id: 1,
+  //     ingredient_id: 1,
+  //     recipe_id: null,
+  //     location_id: 1,
+  //     created_at: '2024-01-01',
+  //   },
+  //   {
+  //     id: 2,
+  //     quantity: 2,
+  //     unit: 'portions',
+  //     expiration_date: '2025-06-30',
+  //     user_id: 1,
+  //     ingredient_id: null,
+  //     recipe_id: 1,
+  //     location_id: 2,
+  //     created_at: '2024-02-15',
+  //   },
+  // ]
+
+  axios
+    .get('/api/InventoryItems')
+    .then((response) => {
+      inventoryItems.value = response.data
+    })
+    .catch((error) => {
+      console.error('Error fetching inventory items:', error)
+    })
 }
 
 function fetchLocations() {
   // Placeholder for future data fetching logic
-  locations.value = [
-    { id: 1, name: 'Pantry', created_at: '2024-01-01' },
-    { id: 2, name: 'Fridge', created_at: '2024-01-02' },
-  ]
+  // locations.value = [
+  //   { id: 1, name: 'Pantry', created_at: '2024-01-01' },
+  //   { id: 2, name: 'Fridge', created_at: '2024-01-02' },
+  // ]
+  axios
+    .get('/api/locations')
+    .then((response) => {
+      locations.value = response.data
+    })
+    .catch((error) => {
+      console.error('Error fetching locations:', error)
+    })
 }
 
 function fetchRecipes() {
@@ -97,7 +115,7 @@ onMounted(() => {
       v-for="location in locations"
       :key="location.id"
       :location="location"
-      :inventoryItems="inventoryItems.filter((item) => item.location_id === location.id)"
+      :inventoryItems="inventoryItems.filter((item) => item.locationId === location.id)"
     />
 
     <div v-if="addForm">
