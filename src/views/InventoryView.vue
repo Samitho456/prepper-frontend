@@ -1,90 +1,86 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import InventoryLocationSection from '@/components/InventoryLocationSection.vue'
 
-const locations = ref([
-  {
-    id: 1,
-    name: 'Pantry',
-    user_id: 1,
-  },
-  {
-    id: 2,
-    name: 'Fridge',
-    user_id: 1,
-  },
-  {
-    id: 3,
-    name: 'Freezer',
-    user_id: 1,
-  },
-])
+const inventoryItems = ref([])
+const locations = ref([])
+const recipes = ref([])
+const ingredients = ref([])
 
-const Inventory = ref([
-  {
-    id: 1,
-    quantity: 2,
-    base_unit: 'kg',
-    user_id: 1,
-    ingredient_id: 1,
-    recipe_id: null,
-    location_id: 1,
-  },
-  {
-    id: 2,
-    quantity: 1,
-    base_unit: 'liters',
-    user_id: 1,
-    ingredient_id: 2,
-    recipe_id: null,
-    location_id: 1,
-  },
-  {
-    id: 3,
-    quantity: 5,
-    base_unit: 'cans',
-    user_id: 1,
-    ingredient_id: 3,
-    recipe_id: null,
-    location_id: 1,
-  },
-  {
-    id: 4,
-    quantity: 3,
-    base_unit: 'portions',
-    user_id: 1,
-    ingredient_id: null,
-    recipe_id: 1,
-    location_id: 2,
-  },
-  {
-    id: 5,
-    quantity: 4,
-    base_unit: 'portions',
-    user_id: 1,
-    ingredient_id: null,
-    recipe_id: 2,
-    location_id: 3,
-  },
-])
+const addForm = ref(false)
 
 function fetchInventory() {
   // Placeholder for future data fetching logic
-  console.log('Fetching inventory data...')
+  inventoryItems.value = [
+    {
+      id: 1,
+      quantity: 5,
+      unit: 'kg',
+      expiration_date: '2026-12-31',
+      user_id: 1,
+      ingredient_id: 1,
+      recipe_id: null,
+      location_id: 1,
+      created_at: '2024-01-01',
+    },
+    {
+      id: 2,
+      quantity: 2,
+      unit: 'portions',
+      expiration_date: '2025-06-30',
+      user_id: 1,
+      ingredient_id: null,
+      recipe_id: 1,
+      location_id: 2,
+      created_at: '2024-02-15',
+    },
+  ]
 }
 
 function fetchLocations() {
   // Placeholder for future data fetching logic
-  console.log('Fetching locations data...')
+  locations.value = [
+    { id: 1, name: 'Pantry', created_at: '2024-01-01' },
+    { id: 2, name: 'Fridge', created_at: '2024-01-02' },
+  ]
 }
 
 function fetchRecipes() {
   // Placeholder for future data fetching logic
-  console.log('Fetching recipes data...')
+  recipes.value = [
+    {
+      id: 1,
+      title: 'Spaghetti Bolognese',
+      description: 'A classic Italian dish.',
+      servings: 4,
+      meal_type: 'Dinner',
+      preparation_time: 60,
+      created_at: '2024-01-10',
+    },
+    {
+      id: 2,
+      title: 'Caesar Salad',
+      description: 'A fresh salad with Caesar dressing.',
+      servings: 2,
+      meal_type: 'Lunch',
+      preparation_time: 20,
+      created_at: '2024-01-15',
+    },
+  ]
 }
 
 function fetchIngredients() {
   // Placeholder for future data fetching logic
-  console.log('Fetching ingredients data...')
+  ingredients.value = [
+    { id: 1, name: 'Tomato', created_at: '2024-01-05' },
+    { id: 2, name: 'Lettuce', created_at: '2024-01-07' },
+  ]
+}
+
+function addLocation() {
+  // Placeholder for future add location logic
+  console.log('Adding new location')
+  addForm.value = false
 }
 
 onMounted(() => {
@@ -97,15 +93,20 @@ onMounted(() => {
 
 <template>
   <section>
-    <div v-for="location in locations" :key="location.id" class="border-b border-gray-300 py-2">
-      <div>{{ location.name }}</div>
-      <div v-for="item in Inventory.filter((i) => i.location_id === location.id)" :key="item.id">
-        <div>
-          <span v-if="item.ingredient_id">Ingredient ID: {{ item.ingredient_id }}</span>
-          <span v-else>Recipe ID: {{ item.recipe_id }}</span>
-          - Quantity: {{ item.quantity }} {{ item.base_unit }}
-        </div>
-      </div>
+    <InventoryLocationSection
+      v-for="location in locations"
+      :key="location.id"
+      :location="location"
+      :inventoryItems="inventoryItems.filter((item) => item.location_id === location.id)"
+    />
+
+    <div v-if="addForm">
+      <h3>Add New Location</h3>
+      <input type="text" placeholder="Location Name" />
+      <button @click="addLocation">Save</button>
+      <button @click="addForm = false">Cancel</button>
     </div>
+
+    <button v-if="!addForm" class="action-button" @click="addForm = true">Add Location</button>
   </section>
 </template>
