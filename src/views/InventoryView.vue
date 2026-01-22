@@ -9,6 +9,7 @@ const recipes = ref([])
 const ingredients = ref([])
 
 const addForm = ref(false)
+const addFormLocationName = ref('')
 
 function fetchInventory() {
   // Placeholder for future data fetching logic
@@ -97,8 +98,40 @@ function fetchIngredients() {
 
 function addLocation() {
   // Placeholder for future add location logic
-  console.log('Adding new location')
+
+  const data = {
+    id: 0,
+    name: addFormLocationName.value,
+    created_at: 0,
+  }
+  axios
+    .post('/api/locations', data)
+    .then((response) => {
+      locations.value.push(response.data)
+    })
+    .catch((error) => {
+      console.error('Error adding location:', error)
+    })
+
   addForm.value = false
+  addFormLocationName.value = ''
+}
+
+function handleLocationUpdated(updatedLocation) {
+  const data = { ...updatedLocation }
+  // Placeholder for future update location logic
+  axios
+    .put(`/api/locations/${updatedLocation.id}`, data)
+    .then((response) => {
+      console.log('Location updated:', response.data)
+      // update the local locations array
+      locations.value = locations.value.map((loc) =>
+        loc.id === response.data.id ? response.data : loc,
+      )
+    })
+    .catch((error) => {
+      console.error('Error updating location:', error)
+    })
 }
 
 onMounted(() => {
@@ -116,14 +149,15 @@ onMounted(() => {
       :key="location.id"
       :location="location"
       :inventoryItems="inventoryItems.filter((item) => item.locationId === location.id)"
+      @location-updated="handleLocationUpdated"
     />
 
-    <div v-if="addForm">
+    <form v-if="addForm" @submit.prevent="addLocation()">
       <h3>Add New Location</h3>
-      <input type="text" placeholder="Location Name" />
-      <button @click="addLocation">Save</button>
-      <button @click="addForm = false">Cancel</button>
-    </div>
+      <input type="text" placeholder="Location Name" v-model="addFormLocationName" />
+      <button type="submit">Add Location</button>
+      <button type="button" @click="((addForm = false), (addFormLocationName = ''))">Cancel</button>
+    </form>
 
     <button v-if="!addForm" class="action-button" @click="addForm = true">Add Location</button>
   </section>

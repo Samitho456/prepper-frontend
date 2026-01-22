@@ -32,16 +32,7 @@ const editLocation = ref({
 const emits = defineEmits(['location-updated', 'item-added', 'item-updated', 'item-deleted'])
 
 function updateLocation(location) {
-  const data = { ...editLocation.value }
-  // Placeholder for future update location logic
-  axios
-    .put(`/api/locations/${location.id}`, data)
-    .then((response) => {
-      emits('location-updated', response.data)
-    })
-    .catch((error) => {
-      console.error('Error updating location:', error)
-    })
+  emits('location-updated', location)
   locationToEdit.value = null
 }
 
@@ -109,10 +100,10 @@ defineProps({
       </button>
     </div>
     <div v-else>
-      <form @submit.prevent="updateLocation(location)">
+      <form @submit.prevent="updateLocation(editLocation)">
         <input type="text" v-model="editLocation.name" required />
         <button type="submit">Save</button>
-        <button @click="locationToEdit = null">Cancel</button>
+        <button type="button" @click="locationToEdit = null">Cancel</button>
       </form>
     </div>
     <ul>
