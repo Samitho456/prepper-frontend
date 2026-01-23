@@ -9,29 +9,11 @@ defineOptions({
 
 // State variables
 const selectedItem = ref(null) // Currently selected item
-const itemToEdit = ref(null) // Currently edited item
 const showAddItemForm = ref(false) // State for add item form
 const showMoreActions = ref(null) // State for showing more actions
 const showLocationPopup = ref(false) // State for showing location popup
 const selectedLocationId = ref(null) // Currently selected location ID (popup)
 const showPopupAlert = ref(false) // State for showing popup alert
-const newItemType = ref({
-  type: '',
-  id: null,
-}) // 'ingredient' or 'recipe'
-
-const newItem = ref({
-  id: 0,
-  quantity: null,
-  unit: '',
-  expirationDate: '',
-  expiresIn: null,
-  userId: 1,
-  ingredientId: null,
-  recipeId: null,
-  locationId: null,
-  createdAt: '',
-}) // New Item being added
 
 const editItemType = ref({
   type: '',
@@ -50,21 +32,8 @@ const editItem = ref({
   createdAt: '',
 }) // Currently Item being edited
 
-const locationToEdit = ref(null) // Currently location To edited
-const editLocation = ref({
-  id: null,
-  name: '',
-  created_at: '',
-}) // Currently location being edited
-
 // Emit events to parent component
-const emits = defineEmits(['location-updated', 'item-added', 'item-updated', 'item-deleted'])
-
-// Emits update event to parent component to update location
-function updateLocation(location) {
-  emits('location-updated', location)
-  locationToEdit.value = null
-}
+const emits = defineEmits(['item-added', 'item-updated', 'item-deleted'])
 
 function updateExpirationDate() {
   if (editItem.value.expiresIn !== null) {
@@ -89,36 +58,36 @@ function updateExpiresIn() {
 }
 
 function updateLocationOnItem() {
-  newItem.value.locationId = selectedLocationId.value
+  editItem.value.locationId = selectedLocationId.value
   showLocationPopup.value = false
   addItemToLocation()
 }
 
 // Add a new item to the location
 function addItemToLocation() {
-  if (newItemType.value.type === 'ingredient') {
-    newItem.value.ingredientId = newItemType.value.id
-    newItem.value.recipeId = null
-  } else if (newItemType.value.type === 'recipe') {
-    newItem.value.recipeId = newItemType.value.id
-    newItem.value.ingredientId = null
+  if (editItemType.value.type === 'ingredient') {
+    editItem.value.ingredientId = editItemType.value.id
+    editItem.value.recipeId = null
+  } else if (editItemType.value.type === 'recipe') {
+    editItem.value.recipeId = editItemType.value.id
+    editItem.value.ingredientId = null
   } else {
     console.error('Invalid item type selected')
     return
   }
-  if (!newItem.value.locationId && !props.locationId) {
+  if (!editItem.value.locationId && !props.locationId) {
     showLocationPopup.value = true
     return
   }
 
   const payload = {
-    ingredientId: newItem.value.ingredientId,
-    recipeId: newItem.value.recipeId,
-    quantity: newItem.value.quantity,
-    unit: newItem.value.unit,
-    expirationDate: newItem.value.expirationDate || null,
-    locationId: props.locationId || newItem.value.locationId,
-    userId: newItem.value.userId,
+    ingredientId: editItem.value.ingredientId,
+    recipeId: editItem.value.recipeId,
+    quantity: editItem.value.quantity,
+    unit: editItem.value.unit,
+    expirationDate: editItem.value.expirationDate || null,
+    locationId: props.locationId || editItem.value.locationId,
+    userId: editItem.value.userId,
   }
 
   axios
@@ -126,10 +95,7 @@ function addItemToLocation() {
     .then((response) => {
       emits('item-added', response.data)
       showAddItemForm.value = false
-      newItemType.value = { type: '', id: null }
-      newItem.value.quantity = 0
-      newItem.value.unit = ''
-      newItem.value.expirationDate = ''
+      resetEditItem()
     })
     .catch((error) => {
       console.error('Error adding item:', error)
@@ -146,7 +112,7 @@ function updateItem(item) {
     .catch((error) => {
       console.error('Error updating item:', error)
     })
-  itemToEdit.value = null
+  resetEditItem()
 }
 
 // Delete an item
@@ -160,6 +126,22 @@ function deleteItem() {
       console.error('Error deleting item:', error)
     })
   showPopupAlert.value = false
+}
+
+function resetEditItem() {
+  selectedItem.value = null
+  editItem.value = {
+    id: null,
+    quantity: null,
+    unit: '',
+    expirationDate: '',
+    userId: null,
+    ingredientId: null,
+    recipeId: null,
+    locationId: null,
+    createdAt: '',
+  }
+  editItemType.value = { type: '', id: null }
 }
 
 // Handle clicks outside the dropdown menu
@@ -224,7 +206,7 @@ const props = defineProps({
         <!-- Iterating over inventory items -->
         <tr v-for="item in inventoryItems" :key="item.id">
           <!-- Show dropdowns for ingredient/recipe selection when editing-->
-          <td v-if="itemToEdit && itemToEdit.id === item.id">
+          <td v-if="selectedItem && selectedItem.id === item.id">
             <select v-model="editItemType.type">
               <option disabled selected value="">Select Type</option>
               <option value="ingredient">Ingredient</option>
@@ -261,7 +243,7 @@ const props = defineProps({
           </td>
 
           <!-- Show input for quantity when editing -->
-          <td v-if="itemToEdit && itemToEdit.id === item.id">
+          <td v-if="selectedItem && selectedItem.id === item.id">
             <input
               type="number"
               v-model="editItem.quantity"
@@ -274,21 +256,21 @@ const props = defineProps({
           <td v-else>{{ item.quantity }}</td>
 
           <!-- Show input for unit when editing -->
-          <td v-if="itemToEdit && itemToEdit.id === item.id">
+          <td v-if="selectedItem && selectedItem.id === item.id">
             <input type="text" v-model="editItem.unit" placeholder="Unit" />
           </td>
           <!-- Show unit of item -->
           <td v-else>{{ item.unit }}</td>
 
           <!-- Show input for expiration date when editing -->
-          <td v-if="itemToEdit && itemToEdit.id === item.id">
+          <td v-if="selectedItem && selectedItem.id === item.id">
             <input type="date" v-model="editItem.expirationDate" @input="updateExpiresIn" />
           </td>
           <!-- Show expiration date of item -->
           <td v-else>{{ item.expirationDate || 'unknown' }}</td>
 
           <!-- Show input for days when editing -->
-          <td v-if="itemToEdit && itemToEdit.id === item.id">
+          <td v-if="selectedItem && selectedItem.id === item.id">
             <input type="number" v-model="editItem.expiresIn" @input="updateExpirationDate" />
           </td>
           <!-- Show days until expiration -->
@@ -307,10 +289,12 @@ const props = defineProps({
             <!-- Action buttons for save/cancel when editing -->
           </td>
 
-          <td v-if="itemToEdit && itemToEdit.id === item.id">
+          <td v-if="selectedItem && selectedItem.id === item.id">
             <button @click.prevent="updateItem(item)">Save</button>
             <button
-              @click="((itemToEdit = null), (showPopupAlert = false), (showLocationPopup = false))"
+              @click="
+                ((selectedItem = null), (showPopupAlert = false), (showLocationPopup = false))
+              "
             >
               Cancel
             </button>
@@ -326,7 +310,7 @@ const props = defineProps({
             <div v-if="showMoreActions === item.id" class="more-actions-menu">
               <button
                 @click="
-                  ((itemToEdit = item),
+                  ((selectedItem = item),
                   (editItem = { ...item }),
                   (showMoreActions = false),
                   (editItemType.type = item.ingredientId ? 'ingredient' : 'recipe'),
@@ -352,36 +336,36 @@ const props = defineProps({
         <!-- Add item form toggle -->
         <tr v-if="!showAddItemForm">
           <td colspan="6">
-            <button @click="showAddItemForm = true">Add Item</button>
+            <button @click="((showAddItemForm = true), resetEditItem())">Add Item</button>
           </td>
         </tr>
         <!-- Add item form -->
         <tr v-else>
           <td>
             <div class="item-select-container">
-              <select v-model="newItemType.type" class="type-select">
+              <select v-model="editItemType.type" class="type-select">
                 <option disabled selected value="">Select Type</option>
                 <option value="ingredient">Ingredient</option>
                 <option value="recipe">Recipe</option>
               </select>
-              <select v-model.number="newItemType.id" class="item-select">
+              <select v-model.number="editItemType.id" class="item-select">
                 <option disabled selected :value="null">Select Item</option>
-                <template v-if="newItemType.type === 'ingredient'">
+                <template v-if="editItemType.type === 'ingredient'">
                   <option
                     v-for="ingredient in ingredients"
                     :key="ingredient.id"
                     :value="ingredient.id"
-                    @select="newItemType.type = 'ingredient'"
+                    @select="editItemType.type = 'ingredient'"
                   >
                     {{ ingredient.name }}
                   </option>
                 </template>
-                <template v-if="newItemType.type === 'recipe'">
+                <template v-if="editItemType.type === 'recipe'">
                   <option
                     v-for="recipe in recipes"
                     :key="recipe.id"
                     :value="recipe.id"
-                    @select="newItemType.type = 'recipe'"
+                    @select="editItemType.type = 'recipe'"
                   >
                     {{ recipe.title }}
                   </option>
@@ -392,37 +376,24 @@ const props = defineProps({
           <td>
             <input
               type="number"
-              v-model="newItem.quantity"
+              v-model="editItem.quantity"
               placeholder="Quantity"
               min="0"
               step="any"
             />
           </td>
           <td>
-            <input type="text" v-model="newItem.unit" placeholder="Unit" />
+            <input type="text" v-model="editItem.unit" placeholder="Unit" />
           </td>
           <td>
-            <input type="date" v-model="newItem.expirationDate" @input="updateExpiresIn" />
+            <input type="date" v-model="editItem.expirationDate" @input="updateExpiresIn" />
           </td>
           <td>
-            <input type="number" v-model="newItem.expiresIn" @input="updateExpirationDate" />
+            <input type="number" v-model="editItem.expiresIn" @input="updateExpirationDate" />
           </td>
           <td>
             <button @click.prevent="addItemToLocation">Add</button>
-            <button
-              @click="
-                (((showAddItemForm = false),
-                (newItem.quantity = 0),
-                (newItem.unit = ''),
-                (newItemType = { type: '', id: null }),
-                (newItem.id = null),
-                (newItem.expirationDate = '')),
-                (showPopupAlert = false),
-                (showLocationPopup = false))
-              "
-            >
-              Cancel
-            </button>
+            <button @click="((showAddItemForm = false), resetEditItem())">Cancel</button>
           </td>
         </tr>
       </tbody>

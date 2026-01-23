@@ -52,6 +52,11 @@ const router = createRouter({
       name: 'inventory',
       component: () => import('../views/InventoryView.vue'),
     },
+    {
+      path: '/ManageLocations',
+      name: 'managelocations',
+      component: () => import('../views/ManageLocationsView.vue'),
+    },
   ],
 })
 

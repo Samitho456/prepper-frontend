@@ -10,3 +10,12 @@ export const useCounterStore = defineStore('counter', () => {
 
   return { count, doubleCount, increment }
 })
+
+export const useLocationStore = defineStore('locations', {
+  state: () => ({ locations: [] }),
+  actions: {
+    setLocations(newLocations) {
+      this.locations = newLocations
+    },
+  },
+})

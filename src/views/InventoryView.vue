@@ -3,12 +3,14 @@ import { ref, onMounted } from 'vue'
 import InventoryLocationSection from '@/components/InventoryLocationSection.vue'
 import axios from 'axios'
 import { RingLoader } from 'vue3-spinner'
+import { useLocationStore } from '@/stores/counter'
+import { RouterLink } from 'vue-router'
 
 // State variables
 const isLoading = ref(false) // Loading state
 const activeTab = ref(0) // Currently active tab
 const inventoryItems = ref([]) // Inventory items data
-const locations = ref([]) // Locations data
+const locationStore = useLocationStore() // Locations store
 const recipes = ref([]) // Recipes data
 const ingredients = ref([]) // Ingredients data
 const addForm = ref(false) // State for add location form
@@ -31,7 +33,7 @@ async function fetchLocations() {
   await axios
     .get('/api/locations')
     .then((response) => {
-      locations.value = response.data
+      locationStore.setLocations(response.data)
     })
     .catch((error) => {
       console.error('Error fetching locations:', error)
@@ -74,7 +76,7 @@ async function addLocation() {
   await axios
     .post('/api/locations', data)
     .then((response) => {
-      locations.value.push(response.data)
+      locationStore.locations.push(response.data)
     })
     .catch((error) => {
       console.error('Error adding location:', error)
@@ -92,7 +94,7 @@ async function handleLocationUpdated(updatedLocation) {
     .put(`/api/locations/${updatedLocation.id}`, data)
     .then((response) => {
       // update the local locations array
-      locations.value = locations.value.map((loc) =>
+      locationStore.locations = locationStore.locations.map((loc) =>
         loc.id === response.data.id ? response.data : loc,
       )
     })
@@ -149,7 +151,7 @@ onMounted(async () => {
       <div>
         <button class="tab" :class="{ active: activeTab === 0 }" @click="activeTab = 0">All</button>
       </div>
-      <div v-for="location in locations" :key="location.id">
+      <div v-for="location in locationStore.locations" :key="location.id">
         <button
           class="tab"
           :class="{ active: activeTab === location.id }"
@@ -160,12 +162,11 @@ onMounted(async () => {
       </div>
     </div>
     <InventoryLocationSection
-      :locations="locations"
+      :locations="locationStore.locations"
       :location-id="activeTab"
       :inventoryItems="generateInventoryItems()"
       :ingredients="ingredients"
       :recipes="recipes"
-      @location-updated="handleLocationUpdated"
       @item-added="handleItemAdded"
       @item-updated="handleItemUpdated"
       @item-deleted="handleItemDeleted"
@@ -181,6 +182,7 @@ onMounted(async () => {
 
     <!-- Button to show form to add a new location -->
     <button v-if="!addForm" class="action-button" @click="addForm = true">Add Location</button>
+    <router-link to="/ManageLocations">Manage Locations</router-link>
   </section>
   <div v-else class="loading-spinner">
     <RingLoader :loading="isLoading" color="#3a8f9f" size="100px" />
