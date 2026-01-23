@@ -2,43 +2,21 @@
 import { ref, onMounted } from 'vue'
 import InventoryLocationSection from '@/components/InventoryLocationSection.vue'
 import axios from 'axios'
+import { RingLoader } from 'vue3-spinner'
 
-const inventoryItems = ref([])
-const locations = ref([])
-const recipes = ref([])
-const ingredients = ref([])
+// State variables
+const isLoading = ref(false) // Loading state
+const activeTab = ref(0) // Currently active tab
+const inventoryItems = ref([]) // Inventory items data
+const locations = ref([]) // Locations data
+const recipes = ref([]) // Recipes data
+const ingredients = ref([]) // Ingredients data
+const addForm = ref(false) // State for add location form
+const addFormLocationName = ref('') // New location name input
 
-const addForm = ref(false)
-const addFormLocationName = ref('')
-
-function fetchInventory() {
-  // Placeholder for future data fetching logic
-  // inventoryItems.value = [
-  //   {
-  //     id: 1,
-  //     quantity: 5,
-  //     unit: 'kg',
-  //     expiration_date: '2026-12-31',
-  //     user_id: 1,
-  //     ingredient_id: 1,
-  //     recipe_id: null,
-  //     location_id: 1,
-  //     created_at: '2024-01-01',
-  //   },
-  //   {
-  //     id: 2,
-  //     quantity: 2,
-  //     unit: 'portions',
-  //     expiration_date: '2025-06-30',
-  //     user_id: 1,
-  //     ingredient_id: null,
-  //     recipe_id: 1,
-  //     location_id: 2,
-  //     created_at: '2024-02-15',
-  //   },
-  // ]
-
-  axios
+// Fetch inventory items from the API
+async function fetchInventory() {
+  await axios
     .get('/api/InventoryItems')
     .then((response) => {
       inventoryItems.value = response.data
@@ -48,13 +26,9 @@ function fetchInventory() {
     })
 }
 
-function fetchLocations() {
-  // Placeholder for future data fetching logic
-  // locations.value = [
-  //   { id: 1, name: 'Pantry', created_at: '2024-01-01' },
-  //   { id: 2, name: 'Fridge', created_at: '2024-01-02' },
-  // ]
-  axios
+// Fetch locations from the API
+async function fetchLocations() {
+  await axios
     .get('/api/locations')
     .then((response) => {
       locations.value = response.data
@@ -64,39 +38,32 @@ function fetchLocations() {
     })
 }
 
-function fetchRecipes() {
-  // Placeholder for future data fetching logic
-  recipes.value = [
-    {
-      id: 1,
-      title: 'Spaghetti Bolognese',
-      description: 'A classic Italian dish.',
-      servings: 4,
-      meal_type: 'Dinner',
-      preparation_time: 60,
-      created_at: '2024-01-10',
-    },
-    {
-      id: 2,
-      title: 'Caesar Salad',
-      description: 'A fresh salad with Caesar dressing.',
-      servings: 2,
-      meal_type: 'Lunch',
-      preparation_time: 20,
-      created_at: '2024-01-15',
-    },
-  ]
+// Fetch recipes from the API
+async function fetchRecipes() {
+  await axios
+    .get('/api/recipes')
+    .then((response) => {
+      recipes.value = response.data
+    })
+    .catch((error) => {
+      console.error('Error fetching recipes:', error)
+    })
 }
 
-function fetchIngredients() {
-  // Placeholder for future data fetching logic
-  ingredients.value = [
-    { id: 1, name: 'Tomato', created_at: '2024-01-05' },
-    { id: 2, name: 'Lettuce', created_at: '2024-01-07' },
-  ]
+// Fetch ingredients from the API
+async function fetchIngredients() {
+  await axios
+    .get('/api/ingredients')
+    .then((response) => {
+      ingredients.value = response.data
+    })
+    .catch((error) => {
+      console.error('Error fetching ingredients:', error)
+    })
 }
 
-function addLocation() {
+// Add a new location
+async function addLocation() {
   // Placeholder for future add location logic
 
   const data = {
@@ -104,7 +71,7 @@ function addLocation() {
     name: addFormLocationName.value,
     created_at: 0,
   }
-  axios
+  await axios
     .post('/api/locations', data)
     .then((response) => {
       locations.value.push(response.data)
@@ -117,13 +84,13 @@ function addLocation() {
   addFormLocationName.value = ''
 }
 
-function handleLocationUpdated(updatedLocation) {
+// Update an existing location
+async function handleLocationUpdated(updatedLocation) {
   const data = { ...updatedLocation }
   // Placeholder for future update location logic
-  axios
+  await axios
     .put(`/api/locations/${updatedLocation.id}`, data)
     .then((response) => {
-      console.log('Location updated:', response.data)
       // update the local locations array
       locations.value = locations.value.map((loc) =>
         loc.id === response.data.id ? response.data : loc,
@@ -134,24 +101,77 @@ function handleLocationUpdated(updatedLocation) {
     })
 }
 
-onMounted(() => {
-  fetchInventory()
-  fetchLocations()
-  fetchRecipes()
-  fetchIngredients()
+// Updates Existing Inventory List with New Item
+function handleItemAdded(newItem) {
+  inventoryItems.value.push(newItem)
+}
+
+// Updates Existing Inventory List with Updated Item
+function handleItemUpdated(updatedItem) {
+  inventoryItems.value = inventoryItems.value.map((item) =>
+    item.id === updatedItem.id ? updatedItem : item,
+  )
+}
+
+// Removes Deleted Item from Existing Inventory List
+function handleItemDeleted(deletedItem) {
+  inventoryItems.value = inventoryItems.value.filter((item) => item.id !== deletedItem.id)
+}
+
+function generateInventoryItems() {
+  if (activeTab.value === 0) {
+    return inventoryItems.value // Show all items
+  }
+
+  let filteredItems = []
+  inventoryItems.value.forEach((item) => {
+    if (item.locationId === activeTab.value) {
+      filteredItems.push(item)
+    }
+  })
+  return filteredItems
+}
+
+// On component mount, fetch all necessary data
+onMounted(async () => {
+  isLoading.value = true
+  await fetchInventory()
+  await fetchLocations()
+  await fetchRecipes()
+  await fetchIngredients()
+  isLoading.value = false
 })
 </script>
 
 <template>
-  <section>
+  <section v-if="!isLoading">
+    <div class="list-header">
+      <div>
+        <button class="tab" :class="{ active: activeTab === 0 }" @click="activeTab = 0">All</button>
+      </div>
+      <div v-for="location in locations" :key="location.id">
+        <button
+          class="tab"
+          :class="{ active: activeTab === location.id }"
+          @click="activeTab = location.id"
+        >
+          {{ location.name }}
+        </button>
+      </div>
+    </div>
     <InventoryLocationSection
-      v-for="location in locations"
-      :key="location.id"
-      :location="location"
-      :inventoryItems="inventoryItems.filter((item) => item.locationId === location.id)"
+      :locations="locations"
+      :location-id="activeTab"
+      :inventoryItems="generateInventoryItems()"
+      :ingredients="ingredients"
+      :recipes="recipes"
       @location-updated="handleLocationUpdated"
+      @item-added="handleItemAdded"
+      @item-updated="handleItemUpdated"
+      @item-deleted="handleItemDeleted"
     />
 
+    <!-- Shows form to add a new location -->
     <form v-if="addForm" @submit.prevent="addLocation()">
       <h3>Add New Location</h3>
       <input type="text" placeholder="Location Name" v-model="addFormLocationName" />
@@ -159,6 +179,39 @@ onMounted(() => {
       <button type="button" @click="((addForm = false), (addFormLocationName = ''))">Cancel</button>
     </form>
 
+    <!-- Button to show form to add a new location -->
     <button v-if="!addForm" class="action-button" @click="addForm = true">Add Location</button>
   </section>
+  <div v-else class="loading-spinner">
+    <RingLoader :loading="isLoading" color="#3a8f9f" size="100px" />
+  </div>
 </template>
+
+<style scoped>
+section {
+  padding: 30px;
+}
+
+.list-header {
+  padding: 10px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.tab {
+  background-color: transparent;
+  padding: 10px 20px;
+  border: none;
+  color: var(--secondary-font-color);
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.active {
+  color: var(--font-color);
+  border-bottom: 3px solid var(--tertiary-color);
+}
+</style>

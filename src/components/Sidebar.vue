@@ -46,7 +46,7 @@ defineOptions({
 
 .sidebar a.active {
   background-color: #216e7f;
-  border-left: 4px solid var(--triary-color);
+  border-left: 4px solid var(--tertiary-color);
 }
 
 .logo-container {
