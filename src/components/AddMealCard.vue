@@ -41,7 +41,6 @@ async function submitForm() {
 
     const response = await axios.post('/api/mealplans', data)
 
-    console.log('Meal added:', response.data)
     emit('meal-added', response.data)
     toast.success('Meal added successfully!')
     formData.value.recipeId = null

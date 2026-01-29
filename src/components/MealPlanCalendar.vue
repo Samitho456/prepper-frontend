@@ -34,7 +34,6 @@ async function removeMeal(mealId) {
   try {
     await axios.delete(`/api/mealplans/${mealId}`)
     emit('meal-removed', mealId)
-    console.log('Removed meal with ID:', mealId)
   } catch (error) {
     console.error('Error removing meal:', error)
   }

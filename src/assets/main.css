@@ -78,3 +78,30 @@ body {
   align-items: center;
   height: 200px;
 }
+
+.data-table {
+  background-color: var(--content-card-bg);
+  border-radius: var(--container-border-radius);
+  width: 100%;
+  border: 1px solid var(--border-color);
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.input-field {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 1em;
+}

@@ -24,6 +24,9 @@ defineOptions({
         <li>
           <RouterLink to="/Ingredients" active-class="active">Ingredients</RouterLink>
         </li>
+        <li>
+          <RouterLink to="/Inventory" active-class="active">Inventory</RouterLink>
+        </li>
       </ul>
     </div>
   </aside>
@@ -43,7 +46,7 @@ defineOptions({
 
 .sidebar a.active {
   background-color: #216e7f;
-  border-left: 4px solid var(--triary-color);
+  border-left: 4px solid var(--tertiary-color);
 }
 
 .logo-container {
