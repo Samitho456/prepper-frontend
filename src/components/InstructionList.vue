@@ -206,7 +206,7 @@ function removeInstruction(index) {
   gap: 8px;
 }
 
-.added-instruction {a
+.added-instruction {
   color: var(--font-color);
   margin: 0;
 }
