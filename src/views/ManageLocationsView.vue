@@ -2,7 +2,7 @@
 import router from '@/router'
 import { useLocationStore } from '@/stores/counter'
 import axios from 'axios'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import Vuefeather from 'vue-feather'
 import { useToast } from 'vue-toastification'
 
@@ -11,6 +11,7 @@ const locationStore = useLocationStore()
 
 const selectedLocation = ref(null)
 const newLocationName = ref('')
+const showAddLocation = ref(false)
 const showPopupAlert = ref(false)
 async function addLocation() {
   axios
@@ -20,6 +21,7 @@ async function addLocation() {
     .then((response) => {
       locationStore.locations.push(response.data)
       newLocationName.value = ''
+      showAddLocation.value = false
       toast.success('Location added successfully')
     })
     .catch((error) => {
@@ -63,6 +65,20 @@ async function deleteLocation() {
       toast.error('Error deleting location')
     })
 }
+
+onMounted(() => {
+  document.title = 'Prepper - Manage Locations'
+  if (locationStore.locations.length === 0) {
+    axios
+      .get('/api/locations')
+      .then((response) => {
+        locationStore.setLocations(response.data)
+      })
+      .catch((error) => {
+        console.error('Error fetching locations:', error)
+      })
+  }
+})
 </script>
 
 <template>
@@ -81,7 +97,7 @@ async function deleteLocation() {
       <tbody>
         <tr v-for="location in locationStore.locations" :key="location.id">
           <td v-if="selectedLocation === location.id">
-            <input type="text" v-model="newLocationName" />
+            <input class="input-field" type="text" v-model="newLocationName" />
           </td>
           <td v-else>{{ location.name }}</td>
           <td v-if="selectedLocation === location.id">
@@ -104,10 +120,28 @@ async function deleteLocation() {
             </button>
           </td>
         </tr>
+        <tr>
+          <td v-if="showAddLocation">
+            <input type="text" v-model="newLocationName" placeholder="New location name" />
+          </td>
+          <td v-if="showAddLocation">
+            <button @click="addLocation" class="action-button">Add Location</button>
+            <button
+              @click="((showAddLocation = false), (newLocationName = ''))"
+              class="cancel-button"
+            >
+              Cancel
+            </button>
+          </td>
+          <td v-else colspan="2">
+            <button @click="showAddLocation = true" class="action-button">Add New Location</button>
+          </td>
+        </tr>
       </tbody>
     </table>
   </section>
   <!-- Popup 'Are you sure you want to delete this item?' -->
+  <div class="popup-overlay" v-if="showPopupAlert" @click="showPopupAlert = false"></div>
   <div class="popup-alert" v-if="showPopupAlert">
     <div>
       <h3>Delete Location</h3>
@@ -128,33 +162,19 @@ async function deleteLocation() {
   border: none;
   cursor: pointer;
 }
-.popup-alert {
-  width: 300px;
-  height: 200px;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: var(--content-card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--container-border-radius);
-  padding: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  z-index: 2000;
-}
 
-.popup-alert select {
+.data-table {
+  table-layout: fixed;
   width: 100%;
-  margin-bottom: 10px;
-  padding: 4px 8px;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
 }
 
-.popup-alert div {
-  margin-bottom: 10px;
+.data-table th:first-child,
+.data-table td:first-child {
+  width: 60%;
 }
-.popup-alert button {
-  margin-right: 10px;
+
+.data-table th:last-child,
+.data-table td:last-child {
+  width: 40%;
 }
 </style>

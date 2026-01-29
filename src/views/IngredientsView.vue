@@ -104,7 +104,6 @@ onMounted(() => {
   axios
     .get('api/Ingredients/GetNutritionalProfiles')
     .then((response) => {
-      console.log('Fetched ingredients:', response.data)
       const normalizedIngredients = response.data.map((ingredient) => ({
         ...ingredient,
         nutritionalProfiles: ingredient.nutritionalProfiles.map((profile) => ({
@@ -158,7 +157,6 @@ const saveProfile = async () => {
     }
 
     const response = await axios.put(`/api/NutritionalProfiles/${profileId}`, normalizedData)
-    console.log('Profile updated:', response.data)
 
     // Update the local state with the response
     const ingredientIndex = state.value.ingredients.findIndex((ing) =>
@@ -221,7 +219,6 @@ const saveNewProfile = async () => {
     }
 
     const response = await axios.post(`/api/NutritionalProfiles`, normalizedData)
-    console.log('Profile created:', response.data)
 
     // Add the new profile to the ingredient
     const ingredientIndex = state.value.ingredients.findIndex((ing) => ing.id === ingredientId)

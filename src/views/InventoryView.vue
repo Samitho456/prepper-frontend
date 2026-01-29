@@ -64,45 +64,6 @@ async function fetchIngredients() {
     })
 }
 
-// Add a new location
-async function addLocation() {
-  // Placeholder for future add location logic
-
-  const data = {
-    id: 0,
-    name: addFormLocationName.value,
-    created_at: 0,
-  }
-  await axios
-    .post('/api/locations', data)
-    .then((response) => {
-      locationStore.locations.push(response.data)
-    })
-    .catch((error) => {
-      console.error('Error adding location:', error)
-    })
-
-  addForm.value = false
-  addFormLocationName.value = ''
-}
-
-// Update an existing location
-async function handleLocationUpdated(updatedLocation) {
-  const data = { ...updatedLocation }
-  // Placeholder for future update location logic
-  await axios
-    .put(`/api/locations/${updatedLocation.id}`, data)
-    .then((response) => {
-      // update the local locations array
-      locationStore.locations = locationStore.locations.map((loc) =>
-        loc.id === response.data.id ? response.data : loc,
-      )
-    })
-    .catch((error) => {
-      console.error('Error updating location:', error)
-    })
-}
-
 // Updates Existing Inventory List with New Item
 function handleItemAdded(newItem) {
   inventoryItems.value.push(newItem)
@@ -160,6 +121,9 @@ onMounted(async () => {
           {{ location.name }}
         </button>
       </div>
+      <button class="tab">
+        <RouterLink :to="`/ManageLocations`">Manage Locations</RouterLink>
+      </button>
     </div>
     <InventoryLocationSection
       :locations="locationStore.locations"
@@ -179,10 +143,6 @@ onMounted(async () => {
       <button type="submit">Add Location</button>
       <button type="button" @click="((addForm = false), (addFormLocationName = ''))">Cancel</button>
     </form>
-
-    <!-- Button to show form to add a new location -->
-    <button v-if="!addForm" class="action-button" @click="addForm = true">Add Location</button>
-    <router-link to="/ManageLocations">Manage Locations</router-link>
   </section>
   <div v-else class="loading-spinner">
     <RingLoader :loading="isLoading" color="#3a8f9f" size="100px" />
@@ -215,5 +175,10 @@ section {
 .active {
   color: var(--font-color);
   border-bottom: 3px solid var(--tertiary-color);
+}
+
+.tab a {
+  text-decoration: none;
+  color: inherit;
 }
 </style>

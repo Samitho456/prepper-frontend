@@ -88,7 +88,6 @@ function generateGroceryList() {
       }
     })
   })
-  console.log('Grocery List:', groceryList)
 }
 
 // Fetch meal plans for the current week
@@ -102,7 +101,6 @@ async function GetMealPlans() {
     mealplans.value = response.data
     mealplans.value.forEach((meal) => {
       meals.push(meal.recipe)
-      console.log('Meal recipe:', meal.recipe)
     })
   } catch (error) {
     console.error('Error fetching meal plans:', error)
@@ -127,7 +125,6 @@ async function handleMealAdded(newMeal) {
     newMeal.recipe = response.data
     mealplans.value.push(newMeal)
     meals.push(response.data)
-    console.log('Added new meal to list:', newMeal)
   } catch (error) {
     console.error('Error fetching recipe details:', error)
     // Fallback: use recipe from recipes list

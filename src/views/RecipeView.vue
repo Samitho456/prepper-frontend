@@ -171,7 +171,6 @@ onMounted(async () => {
     const id = route.params.id
     const response = await axios.get(`/api/Fullrecipes/${id}`)
     state.value.recipe = response.data
-    console.log('Fetched recipe data:', state.value.recipe)
     state.value.isLoading = false
   } catch (error) {
     console.error('Error fetching recipe data:', error)

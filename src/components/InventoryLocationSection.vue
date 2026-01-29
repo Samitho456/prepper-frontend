@@ -2,6 +2,10 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import Vuefeather from 'vue-feather'
+import DeletePopupAlert from '@/components/DeletePopupAlert.vue'
+import { useToast } from 'vue-toastification'
+
+const toast = useToast()
 
 defineOptions({
   name: 'InventoryLocationSection',
@@ -11,8 +15,6 @@ defineOptions({
 const selectedItem = ref(null) // Currently selected item
 const showAddItemForm = ref(false) // State for add item form
 const showMoreActions = ref(null) // State for showing more actions
-const showLocationPopup = ref(false) // State for showing location popup
-const selectedLocationId = ref(null) // Currently selected location ID (popup)
 const showPopupAlert = ref(false) // State for showing popup alert
 
 const editItemType = ref({
@@ -25,6 +27,7 @@ const editItem = ref({
   quantity: null,
   unit: '',
   expirationDate: '',
+  expiresIn: null,
   userId: null,
   ingredientId: null,
   recipeId: null,
@@ -57,27 +60,49 @@ function updateExpiresIn() {
   }
 }
 
-function updateLocationOnItem() {
-  editItem.value.locationId = selectedLocationId.value
-  showLocationPopup.value = false
-  addItemToLocation()
+function startEditing(item) {
+  selectedItem.value = item
+  editItem.value = { ...item }
+  editItemType.value.type = item.ingredientId ? 'ingredient' : 'recipe'
+  editItemType.value.id = item.ingredientId || item.recipeId
+  showMoreActions.value = false
+  // If location is not set and we're in a specific location view, set it as default
+  if (!editItem.value.locationId && props.locationId) {
+    editItem.value.locationId = props.locationId
+  }
+  updateExpiresIn()
+}
+
+function validateAddItem() {
+  if (!editItemType.value.type || !editItemType.value.id) {
+    return { status: false, message: 'Please select an ingredient or recipe.' }
+  }
+  if (!editItem.value.quantity || editItem.value.quantity <= 0) {
+    return { status: false, message: 'Please enter a valid quantity.' }
+  }
+  if (!editItem.value.unit) {
+    return { status: false, message: 'Please enter a unit.' }
+  }
+  if (!editItem.value.locationId) {
+    return { status: false, message: 'Please select a location.' }
+  }
+  return { status: true }
 }
 
 // Add a new item to the location
 function addItemToLocation() {
+  const validation = validateAddItem()
+  if (!validation.status) {
+    toast.error(validation.message)
+    return
+  }
+
   if (editItemType.value.type === 'ingredient') {
     editItem.value.ingredientId = editItemType.value.id
     editItem.value.recipeId = null
   } else if (editItemType.value.type === 'recipe') {
     editItem.value.recipeId = editItemType.value.id
     editItem.value.ingredientId = null
-  } else {
-    console.error('Invalid item type selected')
-    return
-  }
-  if (!editItem.value.locationId && !props.locationId) {
-    showLocationPopup.value = true
-    return
   }
 
   const payload = {
@@ -87,7 +112,7 @@ function addItemToLocation() {
     unit: editItem.value.unit,
     expirationDate: editItem.value.expirationDate || null,
     locationId: props.locationId || editItem.value.locationId,
-    userId: editItem.value.userId,
+    userId: 1,
   }
 
   axios
@@ -135,6 +160,7 @@ function resetEditItem() {
     quantity: null,
     unit: '',
     expirationDate: '',
+    expiresIn: null,
     userId: null,
     ingredientId: null,
     recipeId: null,
@@ -199,6 +225,7 @@ const props = defineProps({
           <th>Unit</th>
           <th>Expiration Date</th>
           <th>Expires In</th>
+          <th>Location</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -207,28 +234,30 @@ const props = defineProps({
         <tr v-for="item in inventoryItems" :key="item.id">
           <!-- Show dropdowns for ingredient/recipe selection when editing-->
           <td v-if="selectedItem && selectedItem.id === item.id">
-            <select v-model="editItemType.type">
-              <option disabled selected value="">Select Type</option>
-              <option value="ingredient">Ingredient</option>
-              <option value="recipe">Recipe</option>
-            </select>
-            <select v-model.number="editItemType.id">
-              <option disabled selected :value="null">Select Item</option>
-              <template v-if="editItemType.type === 'ingredient'">
-                <option
-                  v-for="ingredient in ingredients"
-                  :key="ingredient.id"
-                  :value="ingredient.id"
-                >
-                  {{ ingredient.name }}
-                </option>
-              </template>
-              <template v-if="editItemType.type === 'recipe'">
-                <option v-for="recipe in recipes" :key="recipe.id" :value="recipe.id">
-                  {{ recipe.title }}
-                </option>
-              </template>
-            </select>
+            <div class="item-select-container">
+              <select v-model="editItemType.type" class="type-select">
+                <option disabled selected value="">Select Type</option>
+                <option value="ingredient">Ingredient</option>
+                <option value="recipe">Recipe</option>
+              </select>
+              <select v-model.number="editItemType.id" class="item-select">
+                <option disabled selected :value="null">Select Item</option>
+                <template v-if="editItemType.type === 'ingredient'">
+                  <option
+                    v-for="ingredient in ingredients"
+                    :key="ingredient.id"
+                    :value="ingredient.id"
+                  >
+                    {{ ingredient.name }}
+                  </option>
+                </template>
+                <template v-if="editItemType.type === 'recipe'">
+                  <option v-for="recipe in recipes" :key="recipe.id" :value="recipe.id">
+                    {{ recipe.title }}
+                  </option>
+                </template>
+              </select>
+            </div>
           </td>
           <!-- Show name of item -->
           <td v-else>
@@ -245,6 +274,7 @@ const props = defineProps({
           <!-- Show input for quantity when editing -->
           <td v-if="selectedItem && selectedItem.id === item.id">
             <input
+              class="input-field"
               type="number"
               v-model="editItem.quantity"
               placeholder="Quantity"
@@ -257,21 +287,31 @@ const props = defineProps({
 
           <!-- Show input for unit when editing -->
           <td v-if="selectedItem && selectedItem.id === item.id">
-            <input type="text" v-model="editItem.unit" placeholder="Unit" />
+            <input type="text" class="input-field" v-model="editItem.unit" placeholder="Unit" />
           </td>
           <!-- Show unit of item -->
           <td v-else>{{ item.unit }}</td>
 
           <!-- Show input for expiration date when editing -->
           <td v-if="selectedItem && selectedItem.id === item.id">
-            <input type="date" v-model="editItem.expirationDate" @input="updateExpiresIn" />
+            <input
+              type="date"
+              class="input-field"
+              v-model="editItem.expirationDate"
+              @input="updateExpiresIn"
+            />
           </td>
           <!-- Show expiration date of item -->
           <td v-else>{{ item.expirationDate || 'unknown' }}</td>
 
           <!-- Show input for days when editing -->
           <td v-if="selectedItem && selectedItem.id === item.id">
-            <input type="number" v-model="editItem.expiresIn" @input="updateExpirationDate" />
+            <input
+              type="number"
+              class="input-field"
+              v-model="editItem.expiresIn"
+              @input="updateExpirationDate"
+            />
           </td>
           <!-- Show days until expiration -->
           <td v-else>
@@ -285,16 +325,29 @@ const props = defineProps({
               days
             </span>
             <span v-else>N/A</span>
-
-            <!-- Action buttons for save/cancel when editing -->
           </td>
 
+          <!-- Show location selector when editing -->
           <td v-if="selectedItem && selectedItem.id === item.id">
-            <button @click.prevent="updateItem(item)">Save</button>
+            <select v-model.number="editItem.locationId" class="input-field">
+              <option :value="null">Select Location</option>
+              <option v-for="location in locations" :key="location.id" :value="location.id">
+                {{ location.name }}
+              </option>
+            </select>
+          </td>
+          <!-- Show location name when viewing -->
+          <td v-else>
+            {{ locations.find((loc) => loc.id === item.locationId)?.name || 'Unknown' }}
+          </td>
+
+          <!-- Action buttons for save/cancel when editing -->
+
+          <td v-if="selectedItem && selectedItem.id === item.id">
+            <button class="action-button" @click.prevent="updateItem(item)">Save</button>
             <button
-              @click="
-                ((selectedItem = null), (showPopupAlert = false), (showLocationPopup = false))
-              "
+              class="cancel-button"
+              @click="((selectedItem = null), (showPopupAlert = false))"
             >
               Cancel
             </button>
@@ -308,17 +361,7 @@ const props = defineProps({
               <vuefeather type="more-vertical" size="18" />
             </button>
             <div v-if="showMoreActions === item.id" class="more-actions-menu">
-              <button
-                @click="
-                  ((selectedItem = item),
-                  (editItem = { ...item }),
-                  (showMoreActions = false),
-                  (editItemType.type = item.ingredientId ? 'ingredient' : 'recipe'),
-                  (editItemType.id = item.ingredientId || item.recipeId))
-                "
-              >
-                Edit
-              </button>
+              <button @click="startEditing(item)">Edit</button>
               <button
                 @click="
                   ((showPopupAlert = true),
@@ -335,8 +378,10 @@ const props = defineProps({
         </tr>
         <!-- Add item form toggle -->
         <tr v-if="!showAddItemForm">
-          <td colspan="6">
-            <button @click="((showAddItemForm = true), resetEditItem())">Add Item</button>
+          <td colspan="7">
+            <button class="action-button" @click="((showAddItemForm = true), resetEditItem())">
+              Add Item
+            </button>
           </td>
         </tr>
         <!-- Add item form -->
@@ -375,6 +420,7 @@ const props = defineProps({
           </td>
           <td>
             <input
+              class="input-field"
               type="number"
               v-model="editItem.quantity"
               placeholder="Quantity"
@@ -383,50 +429,54 @@ const props = defineProps({
             />
           </td>
           <td>
-            <input type="text" v-model="editItem.unit" placeholder="Unit" />
+            <input class="input-field" type="text" v-model="editItem.unit" placeholder="Unit" />
           </td>
           <td>
-            <input type="date" v-model="editItem.expirationDate" @input="updateExpiresIn" />
+            <input
+              class="input-field"
+              type="date"
+              v-model="editItem.expirationDate"
+              @input="updateExpiresIn"
+            />
           </td>
           <td>
-            <input type="number" v-model="editItem.expiresIn" @input="updateExpirationDate" />
+            <input
+              class="input-field"
+              type="number"
+              v-model="editItem.expiresIn"
+              @input="updateExpirationDate"
+            />
           </td>
           <td>
-            <button @click.prevent="addItemToLocation">Add</button>
-            <button @click="((showAddItemForm = false), resetEditItem())">Cancel</button>
+            <select v-model.number="editItem.locationId" class="input-field">
+              <option :value="props.locationId || null">
+                {{ props.locationId ? 'Current Location' : 'Select Location' }}
+              </option>
+              <option v-for="location in locations" :key="location.id" :value="location.id">
+                {{ location.name }}
+              </option>
+            </select>
+          </td>
+          <td>
+            <button @click.prevent="addItemToLocation" class="action-button">Add</button>
+            <button @click="((showAddItemForm = false), resetEditItem())" class="cancel-button">
+              Cancel
+            </button>
           </td>
         </tr>
       </tbody>
     </table>
   </div>
-  <!-- Popup 'Select location to add item to' -->
-  <div class="popup-alert" v-if="showLocationPopup">
-    <p>You are not under a valid location.</p>
-    <p>Please select a location to add item to.</p>
-    <select name="location-select" id="location-select" v-model="selectedLocationId">
-      <option v-for="location in locations" :key="location.id" :value="location.id">
-        {{ location.name }}
-      </option>
-    </select>
-    <button @click="updateLocationOnItem" class="action-button">Confirm</button>
-  </div>
 
   <!-- Popup 'Are you sure you want to delete this item?' -->
-  <div class="popup-alert" v-if="showPopupAlert">
-    <div>
-      {{ editItem.quantity }} - {{ editItem.unit }}
-      <span v-if="editItemType.type === 'ingredient'">
-        {{ ingredients.find((ing) => ing.id === editItemType.id)?.name || editItemType.id }}</span
-      >
-      <span v-else>{{
-        recipes.find((rec) => rec.id === editItemType.id)?.title || editItemType.id
-      }}</span>
-      <p>Expiring on {{ editItem.expirationDate || 'N/A' }}</p>
-    </div>
-    <p>Are you sure you want to delete this item?</p>
-    <button @click="showPopupAlert = false" class="action-button">Cancel</button>
-    <button @click="deleteItem" class="cancel-button">Delete</button>
-  </div>
+  <delete-popup-alert
+    v-if="showPopupAlert"
+    title="Delete Item"
+    message="Are you sure you want to delete this item?"
+    :item-to-delete="editItem"
+    @confirm="deleteItem"
+    @cancel="showPopupAlert = false"
+  />
 </template>
 
 <style scoped>
@@ -514,35 +564,5 @@ th {
 }
 .location-popup p {
   margin-bottom: 10px;
-}
-
-.popup-alert {
-  width: 300px;
-  height: 200px;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: var(--content-card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--container-border-radius);
-  padding: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  z-index: 2000;
-}
-
-.popup-alert select {
-  width: 100%;
-  margin-bottom: 10px;
-  padding: 4px 8px;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-}
-
-.popup-alert div {
-  margin-bottom: 10px;
-}
-.popup-alert button {
-  margin-right: 10px;
 }
 </style>

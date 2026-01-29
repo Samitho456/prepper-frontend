@@ -14,7 +14,6 @@ onMounted(() => {
   axios
     .get('/api/Recipes')
     .then((response) => {
-      console.log('Fetched recipes:', response.data)
       recipes.value = response.data
     })
     .catch((error) => {

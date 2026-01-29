@@ -53,13 +53,11 @@ function addRecipe() {
       instructionText: inst.instructionText,
     })),
   }
-  console.log('Prepared API recipe data:', apiRecipe)
 
   // Call the API to add the recipe
   axios
     .post('/api/Fullrecipes', apiRecipe)
-    .then((response) => {
-      console.log('Recipe added successfully:', response.data)
+    .then(() => {
       toast.success('Recipe added successfully!')
       router.push({ name: 'recipes' })
     })
