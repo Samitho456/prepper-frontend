@@ -228,7 +228,7 @@ function removeIngredient(index) {
 }
 
 .ingredient-section label {
-  color: white;
+  color: var(--font-color);
   font-weight: bold;
 }
 
@@ -239,7 +239,7 @@ function removeIngredient(index) {
 }
 
 .added-ingredients {
-  color: white;
+  color: var(--font-color);
   margin: 0;
 }
 

@@ -48,7 +48,7 @@ onMounted(() => {
 
 <style scoped>
 h1 {
-  color: white;
+  color: black;
   text-align: center;
   margin-top: 20px;
 }

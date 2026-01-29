@@ -189,7 +189,7 @@ function removeInstruction(index) {
 }
 
 .instruction-section label {
-  color: white;
+  color: var(--font-color);
   font-weight: bold;
 }
 
@@ -206,8 +206,8 @@ function removeInstruction(index) {
   gap: 8px;
 }
 
-.added-instruction {
-  color: white;
+.added-instruction {a
+  color: var(--font-color);
   margin: 0;
 }
 
