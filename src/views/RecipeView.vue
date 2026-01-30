@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import axios from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 import { RingLoader } from 'vue3-spinner'
@@ -20,6 +20,8 @@ const editRecipe = () => {
   router.push({ name: 'AddRecipeView', params: { id: state.value.recipe.id } })
 }
 
+const scaleFactor = ref(1)
+
 const state = ref({
   recipe: {
     id: 0,
@@ -35,6 +37,17 @@ const state = ref({
     },
   },
   isLoading: true,
+})
+
+const scaledIngredients = computed(() => {
+  return state.value.recipe.ingredients.map((ingredient) => ({
+    ...ingredient,
+    scaledQuantity: (ingredient.quantity * scaleFactor.value).toFixed(2),
+  }))
+})
+
+const scaledServings = computed(() => {
+  return Math.round(state.value.recipe.servings * scaleFactor.value)
 })
 
 onMounted(async () => {
@@ -69,7 +82,16 @@ onMounted(async () => {
         <h3>Details</h3>
         <span class="detail-item">
           <img :src="restaurantIcon" alt="Servings" class="detail-icon" />
-          <span class="detail-text">Servings: {{ state.recipe.servings }}</span>
+          <div class="servings-control">
+            <span class="detail-text">Servings:</span>
+            <div class="scale-input-group">
+              <button @click="scaleFactor = Math.max(0.25, scaleFactor - 0.25)" class="scale-btn">
+                −
+              </button>
+              <span class="servings-amount">{{ scaledServings }}</span>
+              <button @click="scaleFactor = scaleFactor + 0.25" class="scale-btn">+</button>
+            </div>
+          </div>
         </span>
         <span class="detail-item">
           <img :src="alarmClockIcon" alt="Prep Time" class="detail-icon" />
@@ -194,8 +216,8 @@ onMounted(async () => {
       <div class="ingredient-box">
         <h3>Ingredients</h3>
         <ul>
-          <li v-for="(ingredient, index) in state.recipe.ingredients" :key="index">
-            {{ ingredient.name }} - {{ ingredient.quantity }} {{ ingredient.unit }}
+          <li v-for="(ingredient, index) in scaledIngredients" :key="index">
+            {{ ingredient.name }} - {{ ingredient.scaledQuantity }} {{ ingredient.unit }}
           </li>
         </ul>
       </div>
@@ -326,6 +348,109 @@ h1 {
 
 .detail-item p {
   margin-bottom: 10px;
+}
+
+.servings-control {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.servings-amount {
+  font-weight: 700;
+  font-size: 1.2em;
+  color: #3a8f9f;
+  min-width: 30px;
+  text-align: center;
+}
+
+.scale-control {
+  margin: 20px 0;
+  padding: 16px;
+  background: linear-gradient(135deg, #f5f9fc 0%, #f0f7fb 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(58, 143, 159, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.scale-control label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 10px;
+  font-size: 0.9em;
+  color: #2c3e50;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.scale-input-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: rgba(255, 255, 255, 0.6);
+  padding: 2px;
+  border-radius: 10px;
+  border: 1px solid rgba(58, 143, 159, 0.1);
+  width: fit-content;
+}
+
+.scale-btn {
+  background-color: #3a8f9f;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+}
+
+.scale-btn:hover {
+  background-color: #2f7a8a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(58, 143, 159, 0.25);
+}
+
+.scale-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(58, 143, 159, 0.15);
+}
+
+.scale-input {
+  width: 60px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1em;
+  font-weight: 600;
+  text-align: center;
+  background-color: white;
+  color: #3a8f9f;
+  transition: all 0.25s ease;
+}
+
+.scale-input:focus {
+  outline: none;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(58, 143, 159, 0.15);
+}
+
+.scale-input::placeholder {
+  color: #aaa;
+}
+
+.scale-multiplier {
+  font-weight: 700;
+  color: #3a8f9f;
+  font-size: 1em;
+  margin: 0 2px;
 }
 
 .detail-item,

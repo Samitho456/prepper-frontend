@@ -1,6 +1,7 @@
 <script setup>
 import axios from 'axios'
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import MealPlanCalendar from '@/components/MealPlanCalendar.vue'
 import { RingLoader } from 'vue3-spinner'
 const date = new Date()
@@ -10,6 +11,7 @@ const recipes = ref([])
 const dateArray = ref([])
 // meal plans data for the week
 const mealplans = ref([])
+const router = useRouter()
 
 // temporary meals array
 let meals = []
@@ -72,22 +74,57 @@ function formatDate(date) {
 
 // Generate a grocery list based on the meals planned for the week
 function generateGroceryList() {
-  let groceryList = []
+  const groceryList = []
+  const itemMap = new Map()
+
   meals.forEach((meal) => {
+    if (!meal?.ingredients) {
+      return
+    }
+
     meal.ingredients.forEach((ingredient) => {
-      const existingItem = groceryList.find((item) => item.id === ingredient.id)
+      const key = ingredient.id ?? `${ingredient.name}-${ingredient.unit ?? ''}`
+      const existingItem = itemMap.get(key)
+      const quantityNumber = Number(ingredient.quantity)
+      const isNumeric = !Number.isNaN(quantityNumber)
+
       if (existingItem) {
-        existingItem.quantity += ingredient.quantity
+        if (existingItem.isNumeric && isNumeric) {
+          existingItem.quantity += quantityNumber
+        } else {
+          existingItem.isNumeric = false
+          existingItem.quantityText = `${existingItem.quantityText}, ${ingredient.quantity}`
+        }
       } else {
-        groceryList.push({
-          id: ingredient.id,
+        itemMap.set(key, {
+          id: ingredient.id ?? key,
           name: ingredient.name,
-          quantity: ingredient.quantity,
-          unit: ingredient.unit,
+          quantity: isNumeric ? quantityNumber : 0,
+          quantityText: isNumeric ? '' : String(ingredient.quantity ?? ''),
+          unit: ingredient.unit ?? '',
+          category: ingredient.category ?? 'Other',
+          isNumeric,
         })
       }
     })
   })
+
+  itemMap.forEach((item) => {
+    const quantityText = item.isNumeric
+      ? `${item.quantity}${item.unit ? ` ${item.unit}` : ''}`
+      : item.quantityText || '1'
+
+    groceryList.push({
+      id: item.id,
+      name: item.name,
+      quantity: quantityText,
+      category: item.category,
+      completed: false,
+    })
+  })
+
+  localStorage.setItem('shoppingListItems', JSON.stringify(groceryList))
+  router.push('/ShoppingList')
 }
 
 // Fetch meal plans for the current week
@@ -156,7 +193,7 @@ onMounted(async () => {
       <div class="week-number-display">Week: {{ getWeek(new Date()) }}</div>
       <!-- Button to generate grocery list -->
       <button @click="generateGroceryList" class="action-button grocery-button">
-        Generate Grocery List
+        Get Grocery List
       </button>
     </div>
     <!-- Meal Plan Calendar Component -->

@@ -27,6 +27,9 @@ defineOptions({
         <li>
           <RouterLink to="/Inventory" active-class="active">Inventory</RouterLink>
         </li>
+        <li>
+          <RouterLink to="/ShoppingList" active-class="active">Shopping List</RouterLink>
+        </li>
       </ul>
     </div>
   </aside>
