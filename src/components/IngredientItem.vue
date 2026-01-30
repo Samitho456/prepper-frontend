@@ -138,7 +138,7 @@ const emit = defineEmits([
 
 <style scoped>
 .ingredient-item {
-  border-bottom: 1px solid #374151;
+  border-bottom: 1px solid var(--border-color);
   transition: background-color 0.2s ease;
 }
 
@@ -147,7 +147,7 @@ const emit = defineEmits([
 }
 
 .ingredient-item:hover .ingredient-header {
-  background-color: rgba(75, 85, 99, 0.1);
+  background-color: #f7fafc;
 }
 
 /* Ingredient Header Wrapper */
@@ -159,19 +159,20 @@ const emit = defineEmits([
 
 .add-btn {
   padding: 1.25rem 1.5rem;
-  background: rgba(34, 197, 94, 0.15);
-  color: #86efac;
+  background: var(--secondary-color);
+  color: #ffffff;
   border: none;
-  border-left: 1px solid #374151;
+  border-left: 1px solid var(--border-color);
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 600;
   white-space: nowrap;
   transition: all 0.2s ease;
+  font-family: var(--body-font);
 }
 
 .add-btn:hover:not(:disabled) {
-  background: rgba(34, 197, 94, 0.25);
+  background: #6bb57d;
 }
 
 .add-btn:active:not(:disabled) {
@@ -189,14 +190,14 @@ const emit = defineEmits([
   justify-content: space-between;
   align-items: center;
   padding: 1.25rem;
-  background: rgba(31, 41, 55, 0.5);
+  background: #ffffff;
   cursor: pointer;
   transition: background-color 0.2s ease;
   flex: 1;
 }
 
 .ingredient-header:hover {
-  background-color: rgba(75, 85, 99, 0.15);
+  background-color: #f7fafc;
 }
 
 .header-left {
@@ -212,7 +213,7 @@ const emit = defineEmits([
   justify-content: center;
   width: 24px;
   height: 24px;
-  color: #93c5fd;
+  color: var(--primary-color);
   transition: transform 0.3s ease;
   font-size: 12px;
   cursor: pointer;
@@ -230,8 +231,9 @@ const emit = defineEmits([
 .ingredient-name {
   margin: 0;
   font-size: 1.1rem;
-  color: #f3f4f6;
-  font-weight: 500;
+  color: var(--font-color);
+  font-weight: 600;
+  font-family: var(--heading-font);
 }
 
 .header-right {
@@ -241,36 +243,36 @@ const emit = defineEmits([
 }
 
 .ingredient-id {
-  background: rgba(59, 130, 246, 0.1);
-  color: #93c5fd;
+  background: rgba(58, 143, 159, 0.1);
+  color: var(--primary-color);
   padding: 0.35rem 0.75rem;
   border-radius: 16px;
   font-size: 0.8rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .profile-badge {
-  background: rgba(34, 197, 94, 0.1);
-  color: #86efac;
+  background: rgba(127, 205, 145, 0.15);
+  color: #2f855a;
   padding: 0.35rem 0.75rem;
   border-radius: 16px;
   font-size: 0.8rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .no-data-badge {
-  background: rgba(107, 114, 128, 0.2);
-  color: #9ca3af;
+  background: rgba(113, 128, 150, 0.1);
+  color: var(--secondary-font-color);
   padding: 0.35rem 0.75rem;
   border-radius: 16px;
   font-size: 0.8rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* Expanded Content */
 .ingredient-content {
   padding: 1.5rem;
-  background: rgba(17, 24, 39, 0.5);
+  background: #f7fafc;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;

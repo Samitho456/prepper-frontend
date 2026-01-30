@@ -17,10 +17,12 @@ defineOptions({
 })
 
 const editRecipe = () => {
-  router.push({ name: 'AddRecipeView', params: { id: state.value.recipe.id } })
+  router.push({ name: 'addrecipe', query: { id: state.value.recipe.id } })
 }
 
 const scaleFactor = ref(1)
+const isCookingMode = ref(false)
+const currentStepIndex = ref(0)
 
 const state = ref({
   recipe: {
@@ -39,6 +41,8 @@ const state = ref({
   isLoading: true,
 })
 
+const baseServings = computed(() => Number(state.value.recipe.servings) || 1)
+
 const scaledIngredients = computed(() => {
   return state.value.recipe.ingredients.map((ingredient) => ({
     ...ingredient,
@@ -47,8 +51,68 @@ const scaledIngredients = computed(() => {
 })
 
 const scaledServings = computed(() => {
-  return Math.round(state.value.recipe.servings * scaleFactor.value)
+  return Math.max(1, Math.round(baseServings.value * scaleFactor.value))
 })
+
+const servingsValue = computed({
+  get() {
+    return scaledServings.value
+  },
+  set(value) {
+    setServings(value)
+  },
+})
+
+const scaledNutrition = computed(() => {
+  const profile = state.value.recipe.nutritionalProfilePerServing || {}
+  const servings = scaledServings.value
+
+  return {
+    kcal: (profile.kcal || 0) * servings,
+    kj: (profile.kj || 0) * servings,
+    protein: (profile.protein || 0) * servings,
+    fatTotal: (profile.fatTotal || 0) * servings,
+    fatSaturated: (profile.fatSaturated || 0) * servings,
+    carbohydrateTotal: (profile.carbohydrateTotal || 0) * servings,
+    carbohydrateSugars: (profile.carbohydrateSugars || 0) * servings,
+    fiber: (profile.fiber || 0) * servings,
+    salt: (profile.salt || 0) * servings,
+  }
+})
+
+function setServings(value) {
+  const base = baseServings.value || 1
+  const next = Math.max(1, Number(value) || 1)
+  scaleFactor.value = next / base
+}
+
+function adjustServings(delta) {
+  setServings(scaledServings.value + delta)
+}
+
+function openCookingMode(startIndex = 0) {
+  currentStepIndex.value = Math.min(
+    Math.max(0, startIndex),
+    state.value.recipe.instructions.length - 1,
+  )
+  isCookingMode.value = true
+}
+
+function closeCookingMode() {
+  isCookingMode.value = false
+}
+
+function nextStep() {
+  if (currentStepIndex.value < state.value.recipe.instructions.length - 1) {
+    currentStepIndex.value += 1
+  }
+}
+
+function previousStep() {
+  if (currentStepIndex.value > 0) {
+    currentStepIndex.value -= 1
+  }
+}
 
 onMounted(async () => {
   try {
@@ -85,11 +149,15 @@ onMounted(async () => {
           <div class="servings-control">
             <span class="detail-text">Servings:</span>
             <div class="scale-input-group">
-              <button @click="scaleFactor = Math.max(0.25, scaleFactor - 0.25)" class="scale-btn">
-                −
-              </button>
-              <span class="servings-amount">{{ scaledServings }}</span>
-              <button @click="scaleFactor = scaleFactor + 0.25" class="scale-btn">+</button>
+              <button @click="adjustServings(-1)" class="scale-btn">−</button>
+              <input
+                v-model.number="servingsValue"
+                class="scale-input"
+                type="number"
+                min="1"
+                step="1"
+              />
+              <button @click="adjustServings(1)" class="scale-btn">+</button>
             </div>
           </div>
         </span>
@@ -209,6 +277,32 @@ onMounted(async () => {
         >
           * = May be inaccurate
         </div>
+        <div class="nutrition-total">
+          <h4>Total ({{ scaledServings }} servings)</h4>
+          <ul>
+            <li>Calories: {{ Math.round(scaledNutrition.kcal) }} kcal</li>
+            <li v-if="scaledNutrition.kj">Energy: {{ Math.round(scaledNutrition.kj) }} kJ</li>
+            <li>Protein: {{ Math.round(scaledNutrition.protein * 10) / 10 }}g</li>
+            <li>Fat (Total): {{ Math.round(scaledNutrition.fatTotal * 10) / 10 }}g</li>
+            <li v-if="scaledNutrition.fatSaturated">
+              Fat (Saturated): {{ Math.round(scaledNutrition.fatSaturated * 10) / 10 }}g
+            </li>
+            <li>
+              Carbohydrates (Total):
+              {{ Math.round(scaledNutrition.carbohydrateTotal * 10) / 10 }}g
+            </li>
+            <li v-if="scaledNutrition.carbohydrateSugars">
+              Carbohydrates (Sugars):
+              {{ Math.round(scaledNutrition.carbohydrateSugars * 10) / 10 }}g
+            </li>
+            <li v-if="scaledNutrition.fiber">
+              Fiber: {{ Math.round(scaledNutrition.fiber * 10) / 10 }}g
+            </li>
+            <li v-if="scaledNutrition.salt">
+              Salt: {{ Math.round(scaledNutrition.salt * 10) / 10 }}g
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
 
@@ -223,7 +317,12 @@ onMounted(async () => {
       </div>
 
       <div class="instruction-box content-card">
-        <h3>Instructions</h3>
+        <div class="instruction-header">
+          <h3>Instructions</h3>
+          <button class="cooking-mode-btn" type="button" @click="openCookingMode()">
+            Cooking Mode
+          </button>
+        </div>
         <ol>
           <li v-for="(instruction, index) in state.recipe.instructions" :key="index">
             {{ instruction.instructionText }}
@@ -234,6 +333,41 @@ onMounted(async () => {
   </section>
   <div v-else class="loading-spinner">
     <RingLoader color="#3a8f9f" size="100px" />
+  </div>
+
+  <div v-if="isCookingMode" class="cooking-mode" role="dialog" aria-modal="true">
+    <div class="cooking-mode-card">
+      <header class="cooking-mode-header">
+        <h2>Cooking Mode</h2>
+        <button class="close-btn" type="button" @click="closeCookingMode">Close</button>
+      </header>
+      <div class="cooking-step">
+        <div class="step-counter">
+          Step {{ currentStepIndex + 1 }} of {{ state.recipe.instructions.length }}
+        </div>
+        <p class="step-text">
+          {{ state.recipe.instructions[currentStepIndex]?.instructionText }}
+        </p>
+      </div>
+      <div class="cooking-controls">
+        <button
+          class="nav-btn"
+          type="button"
+          @click="previousStep"
+          :disabled="currentStepIndex === 0"
+        >
+          Previous
+        </button>
+        <button
+          class="nav-btn primary"
+          type="button"
+          @click="nextStep"
+          :disabled="currentStepIndex >= state.recipe.instructions.length - 1"
+        >
+          Next
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -469,6 +603,18 @@ h1 {
   padding: 0;
 }
 
+.nutrition-total {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.nutrition-total h4 {
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+  color: #2c3e50;
+}
+
 .nutrition-warning {
   background-color: #fff3cd;
   color: #856404;
@@ -514,6 +660,116 @@ h1 {
   padding: 15px;
   background-color: white;
   border-radius: 15px;
+}
+
+.instruction-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cooking-mode-btn {
+  border: none;
+  background: #3a8f9f;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cooking-mode-btn:hover {
+  background: #2f7a8a;
+}
+
+.cooking-mode {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 15, 20, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1000;
+}
+
+.cooking-mode-card {
+  background: #fff;
+  border-radius: 24px;
+  width: min(900px, 100%);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.2);
+}
+
+.cooking-mode-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.close-btn {
+  border: none;
+  background: #e2e8f0;
+  color: #334155;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  background: #cbd5f5;
+}
+
+.cooking-step {
+  display: grid;
+  gap: 16px;
+}
+
+.step-counter {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.step-text {
+  font-size: 2.2rem;
+  line-height: 1.3;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.cooking-controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.nav-btn {
+  flex: 1;
+  border: none;
+  background: #e2e8f0;
+  color: #1e293b;
+  padding: 14px 16px;
+  border-radius: 14px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nav-btn.primary {
+  background: #3a8f9f;
+  color: #fff;
+}
+
+.nav-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .instruction-box h3 {

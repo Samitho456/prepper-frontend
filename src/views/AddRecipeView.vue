@@ -1,6 +1,6 @@
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import IngredientInput from '@/components/IngredientInput.vue'
 import InstructionList from '@/components/InstructionList.vue'
@@ -12,6 +12,7 @@ defineOptions({
 
 const toast = useToast()
 const router = useRouter()
+const route = useRoute()
 
 const recipe = ref({
   title: '',
@@ -24,6 +25,10 @@ const recipe = ref({
 })
 
 const isSubmitting = ref(false)
+const isLoading = ref(false)
+
+const isEditMode = computed(() => Boolean(route.query.id))
+const recipeId = computed(() => Number(route.query.id) || null)
 const fileInput = ref(null)
 
 function handleJsonUpload(event) {
@@ -71,54 +76,101 @@ function triggerFileUpload() {
   fileInput.value?.click()
 }
 
-function addRecipe() {
-  // Prevent multiple submissions
-  if (isSubmitting.value) return
-  isSubmitting.value = true
-
-  // Transform the recipe data to match the API format
-  const apiRecipe = {
-    id: 0,
+function buildApiRecipePayload() {
+  return {
+    id: recipeId.value || 0,
     title: String(recipe.value.title).trim(),
     description: String(recipe.value.description).trim(),
     servings: recipe.value.servings,
     preparationTimeMinutes: recipe.value.prepTime,
     mealType: recipe.value.mealType,
     ingredients: recipe.value.ingredients.map((ing) => ({
-      id: 0,
-      recipeId: 0,
+      id: ing.id || 0,
+      recipeId: recipeId.value || 0,
       ingredientId: ing.ingredientId || 0,
       name: ing.ingredient,
       quantity: ing.quantity,
       unit: ing.unit,
     })),
     instructions: recipe.value.instructions.map((inst, index) => ({
-      id: 0,
+      id: inst.id || 0,
       stepNumber: index + 1,
-      recipeId: 0,
+      recipeId: recipeId.value || 0,
       instructionText: inst.instructionText,
     })),
   }
+}
 
-  // Call the API to add the recipe
-  axios
-    .post('/api/Fullrecipes', apiRecipe)
+function addRecipe() {
+  // Prevent multiple submissions
+  if (isSubmitting.value) return
+  isSubmitting.value = true
+
+  const apiRecipe = buildApiRecipePayload()
+
+  const request = isEditMode.value
+    ? axios.put(`/api/Fullrecipes/${recipeId.value}`, apiRecipe)
+    : axios.post('/api/Fullrecipes', apiRecipe)
+
+  request
     .then(() => {
-      toast.success('Recipe added successfully!')
+      toast.success(
+        isEditMode.value ? 'Recipe updated successfully!' : 'Recipe added successfully!',
+      )
       router.push({ name: 'recipes' })
     })
     .catch((error) => {
-      console.error('Error adding recipe:', error)
-      toast.error('Failed to add recipe. Please try again.')
+      console.error('Error saving recipe:', error)
+      toast.error('Failed to save recipe. Please try again.')
     })
     .finally(() => {
       isSubmitting.value = false
     })
 }
+
+async function loadRecipeForEdit() {
+  if (!isEditMode.value || !recipeId.value) return
+  isLoading.value = true
+
+  try {
+    const response = await axios.get(`/api/Fullrecipes/${recipeId.value}`)
+    const data = response.data
+    recipe.value = {
+      id: data.id,
+      title: data.title || '',
+      description: data.description || '',
+      servings: data.servings ?? null,
+      prepTime: data.preparationTimeMinutes ?? data.prepTime ?? null,
+      mealType: data.mealType || 'dinner',
+      ingredients: Array.isArray(data.ingredients)
+        ? data.ingredients.map((ing) => ({
+            id: ing.id,
+            ingredient: ing.name || ing.ingredient || '',
+            quantity: ing.quantity,
+            unit: ing.unit,
+            ingredientId: ing.ingredientId || null,
+          }))
+        : [],
+      instructions: Array.isArray(data.instructions)
+        ? data.instructions.map((inst) => ({
+            id: inst.id,
+            instructionText: inst.instructionText || inst,
+          }))
+        : [],
+    }
+  } catch (error) {
+    console.error('Error loading recipe:', error)
+    toast.error('Failed to load recipe for editing.')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(loadRecipeForEdit)
 </script>
 
 <template>
-  <h1>Add Recipe</h1>
+  <h1>{{ isEditMode ? 'Edit Recipe' : 'Add Recipe' }}</h1>
   <!-- File Input (hidden) -->
   <input
     ref="fileInput"
@@ -214,8 +266,8 @@ function addRecipe() {
     </div>
 
     <div class="form-row">
-      <button type="submit" :disabled="isSubmitting">
-        {{ isSubmitting ? 'Submitting...' : 'Add Recipe' }}
+      <button type="submit" :disabled="isSubmitting || isLoading">
+        {{ isSubmitting ? 'Submitting...' : isEditMode ? 'Update Recipe' : 'Add Recipe' }}
       </button>
     </div>
   </form>

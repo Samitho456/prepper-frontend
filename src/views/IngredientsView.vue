@@ -1,8 +1,9 @@
 <script setup>
 import axios from 'axios'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import IngredientItem from '../components/IngredientItem.vue'
 import { RingLoader } from 'vue3-spinner'
+import { useIngredientStore } from '@/stores/ingredients'
 
 defineOptions({
   name: 'IngredientsView',
@@ -56,9 +57,13 @@ const defaultUnits = [
   'slice',
 ]
 
+const ingredientStore = useIngredientStore()
+
+// Get ingredients from store
+const ingredients = computed(() => ingredientStore.allIngredientsWithProfiles)
+const isLoading = computed(() => ingredientStore.isLoading)
+
 const state = ref({
-  ingredients: [],
-  loading: true,
   expandedItems: {},
   editingProfile: null,
   editingData: {},
@@ -99,33 +104,19 @@ const extractUniqueUnits = (ingredients) => {
   return uniqueUnits.sort()
 }
 
-onMounted(() => {
+onMounted(async () => {
   document.title = 'Prepper - Ingredients'
-  axios
-    .get('api/Ingredients/GetNutritionalProfiles')
-    .then((response) => {
-      const normalizedIngredients = response.data.map((ingredient) => ({
-        ...ingredient,
-        nutritionalProfiles: ingredient.nutritionalProfiles.map((profile) => ({
-          ...profile,
-          baseUnit: normalizeUnit(profile.baseUnit),
-        })),
-      }))
+  try {
+    await ingredientStore.fetchIngredientsWithProfiles()
 
-      state.value.ingredients = normalizedIngredients
-
-      // Extract unique units from the database
-      const uniqueUnits = extractUniqueUnits(normalizedIngredients)
-      state.value.availableUnits = uniqueUnits
-      state.value.filteredUnitsEdit = [...uniqueUnits]
-      state.value.filteredUnitsAdd = [...uniqueUnits]
-
-      state.value.loading = false
-    })
-    .catch((error) => {
-      console.error('Error fetching ingredients:', error)
-      state.value.loading = false
-    })
+    // Extract unique units from the store data
+    const uniqueUnits = extractUniqueUnits(ingredients.value)
+    state.value.availableUnits = uniqueUnits
+    state.value.filteredUnitsEdit = [...uniqueUnits]
+    state.value.filteredUnitsAdd = [...uniqueUnits]
+  } catch (error) {
+    console.error('Error fetching ingredients:', error)
+  }
 })
 
 const toggleExpand = (ingredientId) => {
@@ -158,22 +149,19 @@ const saveProfile = async () => {
 
     const response = await axios.put(`/api/NutritionalProfiles/${profileId}`, normalizedData)
 
-    // Update the local state with the response
-    const ingredientIndex = state.value.ingredients.findIndex((ing) =>
+    const updatedProfile = {
+      ...response.data,
+      baseUnit: normalizeUnit(response.data.baseUnit),
+    }
+
+    // Find the ingredient ID for this profile
+    const ingredient = ingredients.value.find((ing) =>
       ing.nutritionalProfiles.some((p) => p.id === profileId),
     )
-    if (ingredientIndex !== -1) {
-      const profileIndex = state.value.ingredients[ingredientIndex].nutritionalProfiles.findIndex(
-        (p) => p.id === profileId,
-      )
-      if (profileIndex !== -1) {
-        const updatedProfile = {
-          ...response.data,
-          baseUnit: normalizeUnit(response.data.baseUnit),
-        }
 
-        state.value.ingredients[ingredientIndex].nutritionalProfiles[profileIndex] = updatedProfile
-      }
+    if (ingredient) {
+      // Update the store
+      ingredientStore.updateNutritionalProfile(ingredient.id, updatedProfile)
     }
 
     state.value.editingProfile = null
@@ -220,18 +208,16 @@ const saveNewProfile = async () => {
 
     const response = await axios.post(`/api/NutritionalProfiles`, normalizedData)
 
-    // Add the new profile to the ingredient
-    const ingredientIndex = state.value.ingredients.findIndex((ing) => ing.id === ingredientId)
-    if (ingredientIndex !== -1) {
-      const savedProfile = {
-        ...response.data,
-        baseUnit: normalizeUnit(response.data.baseUnit),
-      }
-
-      state.value.ingredients[ingredientIndex].nutritionalProfiles.push(savedProfile)
-      // Expand the ingredient to show the new profile
-      state.value.expandedItems[ingredientId] = true
+    const savedProfile = {
+      ...response.data,
+      baseUnit: normalizeUnit(response.data.baseUnit),
     }
+
+    // Update the store
+    ingredientStore.addNutritionalProfile(ingredientId, savedProfile)
+
+    // Expand the ingredient to show the new profile
+    state.value.expandedItems[ingredientId] = true
 
     state.value.addingProfile = null
     state.value.newProfileData = {}
@@ -326,19 +312,15 @@ const addNewUnitFromSearchAdd = () => {
 </script>
 
 <template>
-  <section class="ingredients-view" v-if="!state.loading">
+  <section class="ingredients-view" v-if="!isLoading">
     <header class="view-header">
       <h1>Ingredients</h1>
       <p class="subtitle">Manage your ingredients and their nutritional information</p>
     </header>
 
-    <div v-if="state.loading" class="loading-state">
-      <p>Loading ingredients...</p>
-    </div>
-
-    <div v-else-if="state.ingredients.length > 0" class="ingredients-list">
+    <div v-if="ingredients.length > 0" class="ingredients-list">
       <IngredientItem
-        v-for="ingredient in state.ingredients"
+        v-for="ingredient in ingredients"
         :key="ingredient.id"
         :ingredient="ingredient"
         :is-expanded="isExpanded(ingredient.id)"
@@ -387,35 +369,37 @@ const addNewUnitFromSearchAdd = () => {
 
 <style scoped>
 .ingredients-view {
-  padding: 2rem;
+  padding: 30px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
 .view-header {
-  margin-bottom: 2rem;
+  margin-bottom: 24px;
 }
 
 .view-header h1 {
   margin: 0;
-  font-size: 2rem;
-  color: #ffffff;
-  font-weight: 600;
+  font-size: 2.5rem;
+  color: var(--font-color);
+  font-family: var(--heading-font);
+  font-weight: 700;
 }
 
 .subtitle {
-  margin: 0.5rem 0 0 0;
-  color: #a0aec0;
-  font-size: 0.95rem;
+  margin: 8px 0 0 0;
+  color: var(--secondary-font-color);
+  font-size: 1rem;
+  font-family: var(--body-font);
 }
 
 /* List Layout */
 .ingredients-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  border: 1px solid #374151;
-  border-radius: 8px;
+  background: var(--content-card-bg);
+  border-radius: var(--container-border-radius);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
   overflow: hidden;
 }
 
@@ -423,7 +407,20 @@ const addNewUnitFromSearchAdd = () => {
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  color: #6b7280;
+  color: var(--secondary-font-color);
+  background: var(--content-card-bg);
+  border-radius: var(--container-border-radius);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
 }
 
 /* Responsive Design */
@@ -433,7 +430,7 @@ const addNewUnitFromSearchAdd = () => {
   }
 
   .view-header h1 {
-    font-size: 1.5rem;
+    font-size: 2rem;
   }
 }
 </style>

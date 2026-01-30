@@ -80,18 +80,19 @@ const handleAddNewUnit = () => {
 
 .unit-search-input {
   width: 100%;
-  padding: 0.4rem;
-  background: rgba(17, 24, 39, 0.9);
-  border: 1px solid rgba(59, 130, 246, 0.5);
-  border-radius: 4px;
-  color: #d1d5db;
+  padding: 0.5rem;
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--button-border-radius);
+  color: var(--font-color);
   font-size: 0.9rem;
+  font-family: var(--body-font);
 }
 
 .unit-search-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  background: rgba(17, 24, 39, 1);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(58, 143, 159, 0.1);
 }
 
 .unit-dropdown {
@@ -99,35 +100,39 @@ const handleAddNewUnit = () => {
   top: 100%;
   left: 0;
   right: 0;
-  background: rgba(17, 24, 39, 0.95);
-  border: 1px solid rgba(59, 130, 246, 0.5);
+  background: #ffffff;
+  border: 1px solid var(--primary-color);
   border-top: none;
-  border-radius: 0 0 4px 4px;
+  border-radius: 0 0 var(--button-border-radius) var(--button-border-radius);
   max-height: 200px;
   overflow-y: auto;
   z-index: 10;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .unit-option {
   padding: 0.6rem 0.75rem;
-  color: #d1d5db;
+  color: var(--font-color);
   cursor: pointer;
   font-size: 0.9rem;
   transition: background-color 0.2s ease;
+  font-family: var(--body-font);
 }
 
 .unit-option:hover {
-  background: rgba(59, 130, 246, 0.2);
+  background: rgba(58, 143, 159, 0.1);
 }
 
 .unit-option-add {
-  background: rgba(34, 197, 94, 0.1);
-  color: #86efac;
-  border-top: 1px solid rgba(75, 85, 99, 0.3);
-  font-weight: 500;
+  background: rgba(127, 205, 145, 0.1);
+  color: var(--secondary-color);
+  border-top: 1px solid var(--border-color);
+  font-weight: 600;
 }
 
 .unit-option-add:hover {
-  background: rgba(34, 197, 94, 0.2);
+  background: rgba(127, 205, 145, 0.2);
 }
 </style>

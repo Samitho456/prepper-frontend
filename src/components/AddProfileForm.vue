@@ -214,23 +214,28 @@ const updateNewProfileData = (field, value) => {
 <style scoped>
 .ingredient-content {
   padding: 1.5rem;
-  background: rgba(17, 24, 39, 0.5);
+  background: #f7fafc;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
 .add-profile-form {
-  background: rgba(17, 24, 39, 0.8);
-  border-top: 2px solid rgba(34, 197, 94, 0.3);
+  background: #ffffff;
+  border: 2px solid var(--secondary-color);
+  border-radius: 12px;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .form-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #d1d5db;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--font-color);
+  font-family: var(--heading-font);
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(75, 85, 99, 0.3);
+  border-bottom: 1px solid var(--border-color);
   margin-bottom: 0.5rem;
 }
 
@@ -246,35 +251,39 @@ const updateNewProfileData = (field, value) => {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 0.75rem;
-  background: rgba(17, 24, 39, 0.7);
-  border-radius: 6px;
+  padding: 1rem;
+  background: var(--backgroud-color);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
 }
 
 .metric-label {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: var(--secondary-font-color);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  font-weight: 600;
+  font-family: var(--body-font);
 }
 
 .metric-input {
   width: 100%;
   padding: 0.5rem;
-  background: rgba(17, 24, 39, 0.9);
-  border: 1px solid rgba(59, 130, 246, 0.5);
-  border-radius: 4px;
-  color: #d1d5db;
-  font-weight: 700;
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--button-border-radius);
+  color: var(--font-color);
+  font-weight: 600;
   font-size: 1rem;
   text-align: center;
   margin-bottom: 0.5rem;
+  font-family: var(--body-font);
 }
 
 .metric-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  background: rgba(17, 24, 39, 1);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(58, 143, 159, 0.1);
 }
 
 /* Details Grid */
@@ -288,17 +297,18 @@ const updateNewProfileData = (field, value) => {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  padding: 0.5rem;
-  background: rgba(17, 24, 39, 0.7);
-  border-radius: 4px;
+  padding: 0.75rem;
+  background: var(--backgroud-color);
+  border-radius: 8px;
 }
 
 .detail-label {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: var(--secondary-font-color);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  font-weight: 500;
+  font-weight: 600;
+  font-family: var(--body-font);
 }
 
 .detail-edit {
@@ -308,59 +318,62 @@ const updateNewProfileData = (field, value) => {
 
 .edit-input {
   flex: 1;
-  padding: 0.4rem;
-  background: rgba(17, 24, 39, 0.9);
-  border: 1px solid rgba(59, 130, 246, 0.5);
-  border-radius: 4px;
-  color: #d1d5db;
+  padding: 0.5rem;
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--button-border-radius);
+  color: var(--font-color);
   font-size: 0.9rem;
+  font-family: var(--body-font);
 }
 
 .edit-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  background: rgba(17, 24, 39, 1);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(58, 143, 159, 0.1);
 }
 
 .action-buttons {
   display: flex;
   gap: 0.75rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid rgba(75, 85, 99, 0.3);
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
 }
 
 .btn-confirm,
 .btn-cancel {
   flex: 1;
-  padding: 0.7rem 1.25rem;
+  padding: 0.75rem 1.25rem;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--button-border-radius);
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  font-family: var(--body-font);
 }
 
 .btn-confirm {
-  background: rgba(34, 197, 94, 0.2);
-  color: #86efac;
-  border: 1px solid rgba(34, 197, 94, 0.5);
+  background: var(--secondary-color);
+  color: #ffffff;
 }
 
 .btn-confirm:hover:not(:disabled) {
-  background: rgba(34, 197, 94, 0.3);
-  border-color: #22c55e;
+  background: #6bb57d;
 }
 
 .btn-cancel {
-  background: rgba(239, 68, 68, 0.2);
-  color: #fca5a5;
-  border: 1px solid rgba(239, 68, 68, 0.5);
+  background: #e53e3e;
+  color: #ffffff;
 }
 
 .btn-cancel:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.3);
-  border-color: #ef4444;
+  background: #c53030;
+}
+
+.btn-confirm:active:not(:disabled),
+.btn-cancel:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 /* Responsive Design */

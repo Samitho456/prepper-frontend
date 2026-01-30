@@ -1,9 +1,11 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import InventoryLocationSection from '@/components/InventoryLocationSection.vue'
 import axios from 'axios'
 import { RingLoader } from 'vue3-spinner'
 import { useLocationStore } from '@/stores/counter'
+import { useRecipeStore } from '@/stores/recipes'
+import { useIngredientStore } from '@/stores/ingredients'
 import { RouterLink } from 'vue-router'
 
 // State variables
@@ -11,10 +13,15 @@ const isLoading = ref(false) // Loading state
 const activeTab = ref(0) // Currently active tab
 const inventoryItems = ref([]) // Inventory items data
 const locationStore = useLocationStore() // Locations store
-const recipes = ref([]) // Recipes data
-const ingredients = ref([]) // Ingredients data
+const recipeStore = useRecipeStore() // Recipes store
+const ingredientStore = useIngredientStore() // Ingredients store
 const addForm = ref(false) // State for add location form
 const addFormLocationName = ref('') // New location name input
+const searchQuery = ref('') // Search filter
+
+// Get data from stores
+const recipes = computed(() => recipeStore.allRecipes)
+const ingredients = computed(() => ingredientStore.allIngredients)
 
 // Fetch inventory items from the API
 async function fetchInventory() {
@@ -42,26 +49,12 @@ async function fetchLocations() {
 
 // Fetch recipes from the API
 async function fetchRecipes() {
-  await axios
-    .get('/api/recipes')
-    .then((response) => {
-      recipes.value = response.data
-    })
-    .catch((error) => {
-      console.error('Error fetching recipes:', error)
-    })
+  await recipeStore.fetchRecipes()
 }
 
 // Fetch ingredients from the API
 async function fetchIngredients() {
-  await axios
-    .get('/api/ingredients')
-    .then((response) => {
-      ingredients.value = response.data
-    })
-    .catch((error) => {
-      console.error('Error fetching ingredients:', error)
-    })
+  await ingredientStore.fetchIngredients()
 }
 
 // Updates Existing Inventory List with New Item
@@ -83,16 +76,34 @@ function handleItemDeleted(deletedItem) {
 
 function generateInventoryItems() {
   if (activeTab.value === 0) {
-    return inventoryItems.value // Show all items
+    return filterInventoryItems(inventoryItems.value) // Show all items
   }
 
-  let filteredItems = []
-  inventoryItems.value.forEach((item) => {
-    if (item.locationId === activeTab.value) {
-      filteredItems.push(item)
-    }
-  })
-  return filteredItems
+  const filteredItems = inventoryItems.value.filter((item) => item.locationId === activeTab.value)
+  return filterInventoryItems(filteredItems)
+}
+
+function filterInventoryItems(items) {
+  const query = searchQuery.value.trim().toLowerCase()
+  if (!query) {
+    return items
+  }
+
+  return items.filter((item) => getItemDisplayName(item).includes(query))
+}
+
+function getItemDisplayName(item) {
+  if (item.ingredientId) {
+    const ingredient = ingredients.value.find((ing) => ing.id === item.ingredientId)
+    return (ingredient?.name || String(item.ingredientId)).toLowerCase()
+  }
+
+  if (item.recipeId) {
+    const recipe = recipes.value.find((rec) => rec.id === item.recipeId)
+    return (recipe?.title || String(item.recipeId)).toLowerCase()
+  }
+
+  return (item.name || '').toLowerCase()
 }
 
 // On component mount, fetch all necessary data
@@ -124,6 +135,14 @@ onMounted(async () => {
       <button class="tab">
         <RouterLink :to="`/ManageLocations`">Manage Locations</RouterLink>
       </button>
+    </div>
+    <div class="search-bar">
+      <input
+        v-model="searchQuery"
+        type="text"
+        placeholder="Search inventory..."
+        aria-label="Search inventory"
+      />
     </div>
     <InventoryLocationSection
       :locations="locationStore.locations"
@@ -160,6 +179,18 @@ section {
   gap: 10px;
   flex-wrap: wrap;
   margin-bottom: 20px;
+}
+
+.search-bar {
+  margin-bottom: 20px;
+}
+
+.search-bar input {
+  width: min(420px, 100%);
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.95rem;
 }
 
 .tab {

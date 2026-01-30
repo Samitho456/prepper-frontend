@@ -285,10 +285,11 @@ const updateEditingData = (field, value) => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  padding: 1rem;
-  background: rgba(31, 41, 55, 0.5);
-  border-radius: 6px;
-  border-left: 3px solid #3b82f6;
+  padding: 1.25rem;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .profile-card:not(:last-child) {
@@ -300,18 +301,19 @@ const updateEditingData = (field, value) => {
   justify-content: space-between;
   align-items: center;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(75, 85, 99, 0.3);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .profile-number {
   font-size: 0.9rem;
-  font-weight: 600;
-  color: #d1d5db;
+  font-weight: 700;
+  color: var(--font-color);
+  font-family: var(--heading-font);
 }
 
 .profile-date {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: var(--secondary-font-color);
 }
 
 .profile-actions {
@@ -321,18 +323,19 @@ const updateEditingData = (field, value) => {
 
 .edit-btn {
   padding: 0.5rem 1rem;
-  background: rgba(59, 130, 246, 0.2);
-  color: #93c5fd;
-  border: 1px solid rgba(59, 130, 246, 0.5);
-  border-radius: 4px;
+  background: rgba(58, 143, 159, 0.1);
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  border-radius: var(--button-border-radius);
   cursor: pointer;
   font-size: 0.9rem;
+  font-weight: 600;
   transition: all 0.2s ease;
+  font-family: var(--body-font);
 }
 
 .edit-btn:hover {
-  background: rgba(59, 130, 246, 0.3);
-  border-color: #3b82f6;
+  background: rgba(58, 143, 159, 0.2);
 }
 
 .edit-btn:active {
@@ -351,42 +354,47 @@ const updateEditingData = (field, value) => {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 0.75rem;
-  background: rgba(17, 24, 39, 0.7);
-  border-radius: 6px;
+  padding: 1rem;
+  background: var(--backgroud-color);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
 }
 
 .metric-value {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 700;
   line-height: 1;
   margin-bottom: 0.5rem;
+  font-family: var(--heading-font);
 }
 
 .metric-label {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: var(--secondary-font-color);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  font-weight: 600;
+  font-family: var(--body-font);
 }
 
 .metric-input {
   width: 100%;
   padding: 0.5rem;
-  background: rgba(17, 24, 39, 0.9);
-  border: 1px solid rgba(59, 130, 246, 0.5);
-  border-radius: 4px;
-  color: #d1d5db;
-  font-weight: 700;
+  background: #ffffff;
+  border: 1px solid var(--primary-color);
+  border-radius: var(--button-border-radius);
+  color: var(--font-color);
+  font-weight: 600;
   font-size: 1rem;
   text-align: center;
   margin-bottom: 0.5rem;
+  font-family: var(--body-font);
 }
 
 .metric-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  background: rgba(17, 24, 39, 1);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(58, 143, 159, 0.1);
 }
 
 /* Details Grid */
@@ -400,23 +408,25 @@ const updateEditingData = (field, value) => {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  padding: 0.5rem;
-  background: rgba(17, 24, 39, 0.7);
-  border-radius: 4px;
+  padding: 0.75rem;
+  background: var(--backgroud-color);
+  border-radius: 8px;
 }
 
 .detail-label {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: var(--secondary-font-color);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  font-weight: 500;
+  font-weight: 600;
+  font-family: var(--body-font);
 }
 
 .detail-value {
   font-size: 0.95rem;
-  color: #d1d5db;
+  color: var(--font-color);
   font-weight: 600;
+  font-family: var(--body-font);
 }
 
 .detail-edit {
@@ -426,65 +436,68 @@ const updateEditingData = (field, value) => {
 
 .edit-input {
   flex: 1;
-  padding: 0.4rem;
-  background: rgba(17, 24, 39, 0.9);
-  border: 1px solid rgba(59, 130, 246, 0.5);
-  border-radius: 4px;
-  color: #d1d5db;
+  padding: 0.5rem;
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--button-border-radius);
+  color: var(--font-color);
   font-size: 0.9rem;
+  font-family: var(--body-font);
 }
 
 .edit-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  background: rgba(17, 24, 39, 1);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(58, 143, 159, 0.1);
 }
 
 .action-buttons {
   display: flex;
   gap: 0.75rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid rgba(75, 85, 99, 0.3);
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
 }
 
 .btn-confirm,
 .btn-cancel {
   flex: 1;
-  padding: 0.7rem 1.25rem;
+  padding: 0.75rem 1.25rem;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--button-border-radius);
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  font-family: var(--body-font);
 }
 
 .btn-confirm {
-  background: rgba(34, 197, 94, 0.2);
-  color: #86efac;
-  border: 1px solid rgba(34, 197, 94, 0.5);
+  background: var(--secondary-color);
+  color: #ffffff;
 }
 
 .btn-confirm:hover:not(:disabled) {
-  background: rgba(34, 197, 94, 0.3);
-  border-color: #22c55e;
+  background: #6bb57d;
 }
 
 .btn-cancel {
-  background: rgba(239, 68, 68, 0.2);
-  color: #fca5a5;
-  border: 1px solid rgba(239, 68, 68, 0.5);
+  background: #e53e3e;
+  color: #ffffff;
 }
 
 .btn-cancel:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.3);
-  border-color: #ef4444;
+  background: #c53030;
 }
 
 .btn-confirm:disabled,
 .btn-cancel:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.btn-confirm:active:not(:disabled),
+.btn-cancel:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 /* Responsive Design */

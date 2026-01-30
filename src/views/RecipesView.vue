@@ -1,24 +1,26 @@
 <script setup>
 import { RouterLink } from 'vue-router'
 import RecipeCard from '@/components/RecipeCard.vue'
-import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import { computed, onMounted } from 'vue'
+import { useRecipeStore } from '@/stores/recipes'
+
 defineOptions({
   name: 'RecipeOverviewView',
 })
 
-const recipes = ref([])
+const recipeStore = useRecipeStore()
 
-onMounted(() => {
+// Use computed to reactively get recipes from store
+const recipes = computed(() => recipeStore.allRecipes)
+const isLoading = computed(() => recipeStore.isLoading)
+
+onMounted(async () => {
   document.title = 'Prepper - Recipes'
-  axios
-    .get('/api/Recipes')
-    .then((response) => {
-      recipes.value = response.data
-    })
-    .catch((error) => {
-      console.error('Error fetching recipes:', error)
-    })
+  try {
+    await recipeStore.fetchRecipes()
+  } catch (error) {
+    console.error('Error fetching recipes:', error)
+  }
 })
 </script>
 
@@ -37,11 +39,14 @@ onMounted(() => {
       <option value="snack">Snack</option>
     </select>
   </div>
-  <div class="recipes-grid" v-if="recipes.length > 0">
+  <div class="recipes-grid" v-if="!isLoading && recipes.length > 0">
     <RecipeCard v-for="recipe in recipes" :key="recipe.id" :recipe="recipe" />
   </div>
-  <div v-else>
+  <div v-else-if="isLoading">
     <p>Loading recipes...</p>
+  </div>
+  <div v-else>
+    <p>No recipes found</p>
   </div>
   <!-- <RecipeCard :recipe="sampleRecipe" /> -->
 </template>
